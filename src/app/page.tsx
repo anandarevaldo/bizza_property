@@ -1,65 +1,70 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState } from 'react';
+import { Search, ArrowLeft, MapPin, Calendar, CheckCircle, Star, Phone, Mail, Instagram, Facebook, Twitter } from 'lucide-react';
+import Homepage from './components/Home/homepage';
+
+import Login from './components/Login/login';
+import AdminDashboard from './components/Admin/dashboard';
+import ServicePage from './components/Layanan/servicePage';
+
+// --- Interfaces ---
+interface SearchResultItem {
+  id: number;
+  title: string;
+  provider: string;
+  rating: number;
+  price: string;
+  unit: string;
+  desc: string;
+  image: string;
+  isVerified: boolean;
+  isPromo?: boolean;
+}
+
+// --- Data Constants ---
+const SEARCH_RESULTS: SearchResultItem[] = [
+  { id: 1, title: 'Paket Cuci AC Premium', provider: 'Cool Breeze Teknik', rating: 4.8, price: 'Rp 75.000', unit: 'unit', desc: 'Meliputi pencucian filter, pembersihan evaporator, pengecekan tekanan freon, dan pembersihan unit outdoor. Garansi dingin 30 hari.', image: 'https://images.unsplash.com/photo-1621905252507-b35a830ce50e?auto=format&fit=crop&q=80&w=300', isVerified: true, isPromo: true },
+  { id: 2, title: 'Deteksi Kebocoran Pipa', provider: 'Master Pipa Jaya', rating: 4.9, price: 'Rp 150.000', unit: '', desc: 'Pengecekan dan perbaikan kebocoran pipa air bersih maupun kotor menggunakan alat deteksi modern.', image: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&q=80&w=300', isVerified: true, isPromo: false }
+];
+
+// --- Components ---
+
+export default function BizzaPropertyApp() {
+  const [currentView, setCurrentView] = useState<'home' | 'search' | 'login' | 'admin' | 'layanan'>('home');
+  const [activePortfolioCategory, setActivePortfolioCategory] = useState<string>('Semua');
+
+  const switchView = (view: 'home' | 'search' | 'login' | 'admin' | 'layanan') => {
+    setCurrentView(view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="font-sans text-gray-800 bg-white min-h-screen">
+
+      {/* ================= VIEW: HOME ================= */}
+      {currentView === 'home' && (
+        <Homepage
+          switchView={switchView}
+          activePortfolioCategory={activePortfolioCategory}
+          setActivePortfolioCategory={setActivePortfolioCategory}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      )}
+
+      {/* ================= VIEW: LOGIN ================= */}
+      {currentView === 'login' && (
+        <Login switchView={switchView} />
+      )}
+
+      {/* ================= VIEW: ADMIN ================= */}
+      {currentView === 'admin' && (
+        <AdminDashboard />
+      )}
+
+      {/* ================= VIEW: LAYANAN ================= */}
+      {currentView === 'layanan' && (
+        <ServicePage switchView={switchView} />
+      )}
+    </div >
   );
 }

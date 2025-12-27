@@ -2,12 +2,12 @@ import React from 'react';
 import { Home, Briefcase, User, Wrench } from 'lucide-react';
 
 interface ServiceSectionProps {
-    switchView: (view: 'home' | 'search' | 'login' | 'admin' | 'layanan') => void;
+    switchView: (view: any) => void;
 }
 
 const ServiceSection: React.FC<ServiceSectionProps> = ({ switchView }) => {
     return (
-        <section className="pt-32 pb-16 bg-white">
+        <section className="pt-12 pb-16 bg-white">
             <div className="container mx-auto px-4 md:px-12">
 
                 {/* Spesialisasi Kami */}
@@ -17,7 +17,10 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({ switchView }) => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Untuk Rumah */}
-                        <div className="bg-white border-2 border-red-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-red-100 h-52 flex flex-col justify-between hover:-translate-y-2">
+                        <div
+                            onClick={() => switchView('booking-form')}
+                            className="bg-white border-2 border-red-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-red-100 h-52 flex flex-col justify-between hover:-translate-y-2"
+                        >
                             <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
                                 <Home className="w-40 h-40 text-red-500" />
                             </div>
@@ -28,13 +31,12 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({ switchView }) => {
                                 <h3 className="text-xl font-bold mb-1 text-gray-800 leading-tight">Untuk<br />Rumah</h3>
                                 <p className="text-xs text-gray-500 font-medium">Menciptakan kenyamanan hunian anda</p>
                             </div>
-                            <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-500 text-red-500 text-sm font-semibold flex items-center translate-x-4 group-hover:translate-x-0">
-                                Lihat <span className="ml-1">→</span>
-                            </div>
                         </div>
 
                         {/* Untuk Bisnis */}
-                        <div className="bg-white border-2 border-green-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-green-100 h-52 flex flex-col justify-between hover:-translate-y-2">
+                        <div
+                            onClick={() => switchView('booking-form-business')}
+                            className="bg-white border-2 border-green-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-green-100 h-52 flex flex-col justify-between hover:-translate-y-2">
                             <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
                                 <Briefcase className="w-40 h-40 text-green-500" />
                             </div>
@@ -45,20 +47,19 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({ switchView }) => {
                                 <h3 className="text-xl font-bold mb-1 text-gray-800 leading-tight">Untuk<br />Bisnis</h3>
                                 <p className="text-xs text-gray-500 font-medium">Mengoptimalkan Tempat Kerja Anda</p>
                             </div>
-                            <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-500 text-green-500 text-sm font-semibold flex items-center translate-x-4 group-hover:translate-x-0">
-                                Lihat <span className="ml-1">→</span>
-                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Tukang Saja */}
-                    <div className="bg-white border border-gray-100 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.05)] relative overflow-hidden group h-52 flex flex-col justify-between hover:-translate-y-2">
+                    <div
+                        onClick={() => switchView('handyman-selection')}
+                        className="bg-white border-2 border-yellow-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-yellow-100 h-52 flex flex-col justify-between hover:-translate-y-2">
                         <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
-                            <User className="w-40 h-40 text-blue-500" />
+                            <User className="w-40 h-40 text-yellow-500" />
                         </div>
-                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-2 text-blue-600 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                        <div className="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center mb-2 text-yellow-600 shadow-sm group-hover:scale-110 transition-transform duration-300">
                             <User className="w-6 h-6" />
                         </div>
                         <div className="relative z-10">
@@ -68,7 +69,9 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({ switchView }) => {
                     </div>
 
                     {/* Layanan Perbaikan */}
-                    <div className="bg-white border border-gray-100 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.05)] relative overflow-hidden group h-52 flex flex-col justify-between hover:-translate-y-2">
+                    <div
+                        onClick={() => switchView('repair-service-selection')}
+                        className="bg-white border-2 border-cyan-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-cyan-100 h-52 flex flex-col justify-between hover:-translate-y-2">
                         <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
                             <Wrench className="w-40 h-40 text-cyan-500" />
                         </div>

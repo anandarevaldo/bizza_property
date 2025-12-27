@@ -23,14 +23,13 @@ const Footer = () => {
                     {/* Spacer */}
                     <div className="hidden md:block"></div>
 
-                    {/* Layanan Utama */}
+                    {/* Spesialisasi Kami */}
                     <div>
-                        <h3 className="text-white font-bold text-lg mb-6 tracking-wide">Layanan Utama</h3>
+                        <h3 className="text-white font-bold text-lg mb-6 tracking-wide">Spesialisasi Kami</h3>
                         <ul className="space-y-3 text-sm text-gray-400">
-                            <li><a href="#" className="hover:text-yellow-400 transition-colors duration-200 flex items-center"><span className="w-1.5 h-1.5 bg-gray-600 rounded-full mr-2"></span>Tukang</a></li>
-                            <li><a href="#" className="hover:text-yellow-400 transition-colors duration-200 flex items-center"><span className="w-1.5 h-1.5 bg-gray-600 rounded-full mr-2"></span>Renovasi Rumah</a></li>
-                            <li><a href="#" className="hover:text-yellow-400 transition-colors duration-200 flex items-center"><span className="w-1.5 h-1.5 bg-gray-600 rounded-full mr-2"></span>Renovasi Kantor</a></li>
-                            <li><a href="#" className="hover:text-yellow-400 transition-colors duration-200 flex items-center"><span className="w-1.5 h-1.5 bg-gray-600 rounded-full mr-2"></span>Perbaikan Atap Bocor</a></li>
+                            <li><a href="#" className="hover:text-yellow-400 transition-colors duration-200 block">Untuk Rumah</a></li>
+                            <li><a href="#" className="hover:text-yellow-400 transition-colors duration-200 block">Untuk Bisnis</a></li>
+                            <li><a href="#" className="hover:text-yellow-400 transition-colors duration-200 block">Tukang Saja & Perbaikan Layanan</a></li>
                         </ul>
                     </div>
 

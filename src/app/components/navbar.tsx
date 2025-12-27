@@ -1,12 +1,32 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 
 interface NavbarProps {
-    switchView: (view: 'home' | 'search' | 'login' | 'register' | 'admin' | 'layanan') => void;
+    switchView: (view: 'home' | 'search' | 'login' | 'register' | 'admin' | 'layanan' | 'portfolio' | 'about' | 'history') => void;
+    currentView?: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ switchView }) => {
+const Navbar: React.FC<NavbarProps> = ({ switchView, currentView }) => {
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 50) {
+                setIsScrolled(true);
+            } else {
+                setIsScrolled(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const isActive = (view: string) => currentView === view ? 'text-yellow-400 font-bold' : 'hover:text-yellow-400 transition-colors';
+
     return (
-        <nav className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 md:px-12 text-white">
+        <nav className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 text-white transition-all duration-300 ${isScrolled ? 'bg-black/40 backdrop-blur-md shadow-md py-4' : 'bg-transparent py-6'}`}>
             {/* Logo */}
             <div className="text-xl font-bold cursor-pointer" onClick={() => switchView('home')}>
                 <span className="text-white">BIZZA</span> <span className="text-yellow-400">PROPERTY</span>
@@ -14,10 +34,11 @@ const Navbar: React.FC<NavbarProps> = ({ switchView }) => {
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-8 text-sm font-medium">
-                <button onClick={() => switchView('home')} className="hover:text-yellow-400 transition-colors">Home</button>
-                <button onClick={() => switchView('layanan')} className="hover:text-yellow-400 transition-colors">Layanan</button>
-                <button className="hover:text-yellow-400 transition-colors">Portfolio</button>
-                <button className="hover:text-yellow-400 transition-colors">Tentang Kami</button>
+                <button onClick={() => switchView('home')} className={isActive('home')}>Home</button>
+                <button onClick={() => switchView('layanan')} className={isActive('layanan')}>Layanan</button>
+                <button onClick={() => switchView('portfolio')} className={isActive('portfolio')}>Portfolio</button>
+                <button onClick={() => switchView('history')} className={isActive('history')}>Riwayat</button>
+                <button onClick={() => switchView('about')} className={isActive('about')}>Tentang Kami</button>
 
                 <div className="flex items-center space-x-4 pl-4 border-l border-white/20">
                     <button

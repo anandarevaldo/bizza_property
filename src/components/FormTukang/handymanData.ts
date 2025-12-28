@@ -1,0 +1,38 @@
+
+import { Droplets, PaintBucket, Grid3x3, Zap, Wrench, Umbrella, PenTool, Layers, Home, DoorOpen, Shield, ChefHat, HardHat, Fence, Trees, Anchor, Ruler, Palette, Bath, Package, LayoutGrid, BoxSelect, Fan, Wind, Gem, Warehouse, Container, Thermometer, Tent, StopCircle, Sparkles, UserPlus } from 'lucide-react';
+import { HandymanType } from './types';
+
+export const handymanTypes: HandymanType[] = [
+    { id: 'kebocoran', name: 'Tukang Kebocoran', desc: 'Jaga Rumah Bebas Bocor', icon: Droplets, color: 'text-blue-500', bg: 'bg-blue-50' },
+    { id: 'cat', name: 'Tukang Cat', desc: 'Warnai Rumahmu', icon: PaintBucket, color: 'text-pink-500', bg: 'bg-pink-50' },
+    { id: 'keramik', name: 'Tukang Keramik', desc: 'Percantik Lantai & Dinding', icon: Grid3x3, color: 'text-orange-500', bg: 'bg-orange-50' },
+    { id: 'listrik', name: 'Tukang Listrik', desc: 'Rumah Terang, Hati Senang', icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-50' },
+    { id: 'pipa', name: 'Tukang Pipa', desc: 'Air Mengalir Lancar', icon: Wrench, color: 'text-cyan-500', bg: 'bg-cyan-50' },
+    { id: 'sanitasi', name: 'Tukang Sanitasi', desc: 'Kamar Mandi Bersih', icon: Umbrella, color: 'text-purple-500', bg: 'bg-purple-50' },
+    { id: 'konsultan', name: 'Tukang Konsultan', desc: 'Bantu Rencanakan Proyek', icon: PenTool, color: 'text-amber-500', bg: 'bg-amber-50' },
+    { id: 'plafon', name: 'Tukang Plafon', desc: 'Perbaikan Langit-langit', icon: Layers, color: 'text-slate-500', bg: 'bg-slate-50' },
+    { id: 'dinding', name: 'Tukang Dinding', desc: 'Dinding Kokoh Terjaga', icon: Home, color: 'text-red-500', bg: 'bg-red-50' },
+    { id: 'pintu', name: 'Tukang Pintu', desc: 'Kreasi Pintu & Jendela', icon: DoorOpen, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+    { id: 'atap', name: 'Tukang Atap', desc: 'Pelindung Rumahmu', icon: Shield, color: 'text-gray-500', bg: 'bg-gray-50' },
+    { id: 'dapur', name: 'Tukang Dapur', desc: 'Semangat Memasak', icon: ChefHat, color: 'text-rose-500', bg: 'bg-rose-50' },
+    { id: 'konstruksi', name: 'Tukang Konstruksi', desc: 'Bangun Rumah Impian', icon: HardHat, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+    { id: 'pagar', name: 'Tukang Pagar', desc: 'Keamanan Properti', icon: Fence, color: 'text-lime-500', bg: 'bg-lime-50' },
+    { id: 'taman', name: 'Tukang Taman', desc: 'Landscape & Taman', icon: Trees, color: 'text-green-500', bg: 'bg-green-50' },
+    { id: 'pondasi', name: 'Tukang Pondasi', desc: 'Struktur Kuat Kokoh', icon: Anchor, color: 'text-stone-500', bg: 'bg-stone-50' },
+    { id: 'desain', name: 'Tukang Desain', desc: 'Rancang Hunianmu', icon: Ruler, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { id: 'interior', name: 'Tukang Interior', desc: 'Desain Interior Elegan', icon: Palette, color: 'text-fuchsia-500', bg: 'bg-fuchsia-50' },
+    { id: 'toilet', name: 'Tukang Toilet', desc: 'Kamar Mandi Nyaman', icon: Bath, color: 'text-violet-500', bg: 'bg-violet-50' },
+    { id: 'jasa_angkat', name: 'Jasa Angkat', desc: 'Pindahkan Barangmu', icon: Package, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { id: 'conblock', name: 'Tukang Conblock', desc: 'Pekarangan Rumah Indah', icon: LayoutGrid, color: 'text-teal-500', bg: 'bg-teal-50' },
+    { id: 'aluminium', name: 'Tukang Aluminium', desc: 'Percantik Interior', icon: BoxSelect, color: 'text-pink-600', bg: 'bg-pink-50' },
+    { id: 'exhaust', name: 'Tukang Exhaust Fan', desc: 'Udara Ruangan Segar', icon: Fan, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+    { id: 'kipas', name: 'Tukang Kipas Angin', desc: 'Rumahmu Lebih Adem', icon: Wind, color: 'text-red-400', bg: 'bg-red-50' },
+    { id: 'batu_alam', name: 'Tukang Batu Alam', desc: 'Sentuhan Alam Alami', icon: Gem, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { id: 'lemari', name: 'Tukang Lemari', desc: 'Jaga Barang Pentingmu', icon: Warehouse, color: 'text-blue-400', bg: 'bg-blue-50' },
+    { id: 'tangki', name: 'Tukang Tangki Air', desc: 'Pasang Tangki Air', icon: Container, color: 'text-cyan-400', bg: 'bg-cyan-50' },
+    { id: 'heater', name: 'Tukang Water Heater', desc: 'Air Hangat Nyaman', icon: Thermometer, color: 'text-rose-400', bg: 'bg-rose-50' },
+    { id: 'kanopi', name: 'Tukang Kanopi', desc: 'Lindungi Area Luar', icon: Tent, color: 'text-indigo-400', bg: 'bg-indigo-50' },
+    { id: 'lantai', name: 'Tukang Lantai', desc: 'Lantai Rumah Mulus', icon: StopCircle, color: 'text-slate-600', bg: 'bg-slate-50' },
+    { id: 'cuci_toren', name: 'Tukang Cuci Toren', desc: 'Air Bersih Mengalir', icon: Sparkles, color: 'text-sky-500', bg: 'bg-sky-50' },
+    { id: 'kenek', name: 'Kenek', desc: 'Bantu Pekerjaan Cepat', icon: UserPlus, color: 'text-green-600', bg: 'bg-green-50' },
+];

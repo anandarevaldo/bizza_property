@@ -1,22 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { ServiceRepairBookingProps, PaymentMethod } from './types';
-import { paymentMethods } from './constants';
+import { paymentMethods, problemTypesMap } from './constants';
 import { ProblemSelector } from './ProblemSelector';
 import { ConsultationBanner } from './ConsultationBanner';
 import { ProblemDescription } from './ProblemDescription';
 import { ScheduleForm } from './ScheduleForm';
-import { AddressForm } from './AddressForm';
+import { AddressSelector } from '../FormRumah/AddressSelector';
 import { PhotoUpload } from './PhotoUpload';
 import { OrderSummary } from './OrderSummary';
 import { PaymentMethodModal } from './PaymentMethodModal';
 
+// Shared Handyman Components
+import { HandymanList } from '../FormTukang/HandymanList';
+import { handymanTypes } from '../FormTukang/handymanData';
+import { SelectedHandyman } from '../FormTukang/types';
+
 const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView, selectedServiceType }) => {
     // Selection State
     const [selectedProblem, setSelectedProblem] = useState<string | null>(null);
+    const [selectedHandymen, setSelectedHandymen] = useState<SelectedHandyman[]>([]);
 
     // Form State
     const [description, setDescription] = useState('');
+    const [addressSearch, setAddressSearch] = useState('');
     const [addressDetails, setAddressDetails] = useState('');
     const [images, setImages] = useState<File[]>([]);
 
@@ -24,12 +31,70 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
-    const [showAddress, setShowAddress] = useState(false);
+    // const [showAddress, setShowAddress] = useState(false); // Removed
 
     // Payment State
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [tempSelectedPayment, setTempSelectedPayment] = useState<PaymentMethod | null>(null);
+
+    // Logic: Smart Select Handyman based on Problem
+    const handleSelectProblem = (problemId: string) => {
+        setSelectedProblem(problemId);
+
+        const problems = problemTypesMap[selectedServiceType || 'default'] || problemTypesMap['default'];
+        const problem = problems.find(p => p.id === problemId);
+
+        if (problem) {
+            const newHandymen: SelectedHandyman[] = [];
+
+            // Add Main Handyman
+            if (problem.handymanType) {
+                newHandymen.push({
+                    id: Date.now(),
+                    type: problem.handymanType,
+                    quantity: 1,
+                    shift: 'seharian'
+                });
+            }
+
+            // Add Kenek if recommended
+            if (problem.needsKenek) {
+                newHandymen.push({
+                    id: Date.now() + 1,
+                    type: 'Kenek',
+                    quantity: 1,
+                    shift: 'seharian'
+                });
+            }
+
+            setSelectedHandymen(newHandymen);
+        }
+    };
+
+    // Handyman List Handlers
+    const handleUpdateHandyman = (index: number, field: keyof SelectedHandyman, value: any) => {
+        const updated = [...selectedHandymen];
+        updated[index] = { ...updated[index], [field]: value };
+        setSelectedHandymen(updated);
+    };
+
+    const handleRemoveHandyman = (index: number) => {
+        setSelectedHandymen(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleAddHandyman = () => {
+        // Default to 'Tukang Bangunan' or generic if adding manually, user can change it?
+        // For simplicity, adding a generic one, or we could open a modal.
+        // Re-using logic: just add a placeholder for now or duplicating first type.
+        // Let's add a default 'Tukang Bangunan'
+        setSelectedHandymen([
+            ...selectedHandymen,
+            { id: Date.now(), type: 'Tukang Bangunan', quantity: 1, shift: 'seharian' }
+        ]);
+        // Ideally we should show a modal to select the type, but let's keep it simple for this concise refactor
+        // Or trigger a view/modal. For now, adding default.
+    };
 
     // Helpers
     const handleMonthChange = (direction: 'prev' | 'next') => {
@@ -54,12 +119,33 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
     };
 
     const handleSubmit = () => {
+        if (!selectedProblem || selectedHandymen.length === 0) {
+            alert("Mohon pilih masalah dan pastikan tukang terpilih.");
+            return;
+        }
+        if (!addressSearch) {
+            alert("Mohon isi alamat survey.");
+            return;
+        }
         alert("Pesanan Perbaikan Berhasil Dikirim! (Simulasi)");
         switchView('home');
     }
 
-    // Pricing
-    const basePrice = 0;
+    // Pricing Logic (Dynamic based on selected handymen)
+    const calculateTotal = () => {
+        let total = 0;
+        selectedHandymen.forEach(h => {
+            let price = 0;
+            if (h.shift === 'seharian') price = 200000; // Base rate sim
+            if (h.shift === 'pagi') price = 150000;
+            if (h.shift === 'sore') price = 150000;
+            // Adjust price by type? For now flat rate simulation
+            total += price * h.quantity;
+        });
+        return total;
+    };
+
+    const basePrice = calculateTotal();
     const serviceFee = 5000;
     const finalTotal = basePrice + serviceFee;
 
@@ -88,13 +174,24 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
                 <ProblemSelector
                     selectedServiceType={selectedServiceType}
                     selectedProblem={selectedProblem}
-                    onSelectProblem={setSelectedProblem}
+                    onSelectProblem={handleSelectProblem}
                 />
 
                 {/* Section 2: Form */}
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Main Form Area */}
                     <div className="flex-1 space-y-6">
+
+                        {/* Handyman List Visualization */}
+                        {selectedHandymen.length > 0 && (
+                            <HandymanList
+                                selectedHandymen={selectedHandymen}
+                                handymanTypes={handymanTypes}
+                                onUpdateHandyman={handleUpdateHandyman}
+                                onRemoveHandyman={handleRemoveHandyman}
+                                onAddHandymanClick={handleAddHandyman}
+                            />
+                        )}
 
                         <ConsultationBanner onChatWA={handleChatWA} />
 
@@ -112,11 +209,11 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
                             onMonthChange={handleMonthChange}
                         />
 
-                        <AddressForm
-                            addressDetails={addressDetails}
-                            showAddress={showAddress}
-                            onToggleShowAddress={() => setShowAddress(!showAddress)}
-                            onAddressChange={setAddressDetails}
+                        <AddressSelector
+                            addressSearch={addressSearch}
+                            onAddressSearchChange={setAddressSearch}
+                            addressDetail={addressDetails}
+                            onAddressDetailChange={setAddressDetails}
                         />
 
                         <PhotoUpload

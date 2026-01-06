@@ -9,8 +9,8 @@ interface Schedule {
     date: string;
     time: string;
     address: string;
-    handyman: string;
-    status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
+    mandor: string;
+    status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled' | 'Request Survey';
 }
 
 interface ScheduleDetailModalProps {
@@ -111,10 +111,10 @@ export const ScheduleDetailModal: React.FC<ScheduleDetailModalProps> = ({ isOpen
                         </h4>
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold text-lg">
-                                {schedule.handyman.charAt(0)}
+                                {schedule.mandor.charAt(0)}
                             </div>
                             <div className="flex-1">
-                                <p className="font-bold text-gray-900 text-sm">{schedule.handyman}</p>
+                                <p className="font-bold text-gray-900 text-sm">{schedule.mandor}</p>
                                 <p className="text-gray-500 text-xs font-medium">{schedule.service}</p>
                             </div>
                         </div>
@@ -124,9 +124,6 @@ export const ScheduleDetailModal: React.FC<ScheduleDetailModalProps> = ({ isOpen
                     <div className="flex gap-2 pt-4 border-t border-gray-100">
                         <button onClick={() => { onClose(); onEdit(schedule); }} className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition-all shadow-md shadow-blue-200">
                             Edit Jadwal
-                        </button>
-                        <button className="px-4 py-3 rounded-xl bg-gray-50 text-gray-600 font-bold text-sm hover:bg-gray-100 transition-colors border border-gray-100">
-                            Reschedule
                         </button>
                     </div>
                 </div>

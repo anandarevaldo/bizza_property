@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
 
 interface LoginFormProps {
     switchView: (view: any) => void;
@@ -11,15 +12,36 @@ const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Restore Mock Logins for Admin/Mandor
         if (email === 'admin@bizza.com' && password === 'admin123') {
             switchView('admin');
-        } else if (email === 'user@bizza.com' && password === 'user123') {
+            return;
+        } else if (email === 'mandor@bizza.com' && password === 'mandor123') {
+            switchView('mandor');
+            return;
+        }
+
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (error) {
+                alert(error.message); // Keep error alert for now or use better UI
+                return;
+            }
+
+            // Successful login will trigger the onAuthStateChange in Navbar
+            // preventing the need for manual state passing if we just switch view
             switchView('home');
-            alert('Login Berhasil sebagai User!');
-        } else {
-            alert('Email atau password salah!');
+
+        } catch (err) {
+            console.error(err);
+            alert('Terjadi kesalahan saat login.');
         }
     };
 

@@ -9,6 +9,7 @@ interface OrderSummaryProps {
     selectedPaymentMethod: PaymentMethod | null;
     onSelectPaymentClick: () => void;
     onSubmit: () => void;
+    onRequestSurvey?: () => void;
     formattedPrice: (price: number) => string;
 }
 
@@ -19,6 +20,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
     selectedPaymentMethod,
     onSelectPaymentClick,
     onSubmit,
+    onRequestSurvey,
     formattedPrice,
 }) => {
     return (
@@ -70,12 +72,26 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                 </div>
 
                 {/* Submit Button */}
-                <button
-                    onClick={onSubmit}
-                    className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 mt-6"
-                >
-                    Bayar Sekarang
-                </button>
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-3 mt-6">
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onSubmit}
+                            className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                        >
+                            Pesan Sekarang
+                        </button>
+                        <button
+                            onClick={onRequestSurvey || (() => { alert('Permintaan survey telah dikirim ke Mandor'); })}
+                            className="flex-1 bg-white text-blue-600 border-2 border-blue-600 py-4 rounded-2xl font-bold text-lg hover:bg-blue-50 transition-colors"
+                        >
+                            Ajukan Survey
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-gray-400 text-center px-4 leading-relaxed">
+                        *Biaya survey tidak termasuk dalam layanan perbaikan jika Anda memilih opsi survey.
+                    </p>
+                </div>
             </div>
         </div>
     );

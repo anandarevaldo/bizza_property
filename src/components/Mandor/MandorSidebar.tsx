@@ -1,7 +1,7 @@
 import React from 'react';
-import { Home, Users, Calendar, Briefcase, FileText, LayoutGrid, HardHat, Image, LogOut, DollarSign, X } from 'lucide-react';
+import { LayoutGrid, FileText, Users, MessageSquare, LogOut, X, Calendar, ShoppingBag } from 'lucide-react';
 
-interface SidebarProps {
+interface MandorSidebarProps {
     activeTab: string;
     setActiveTab: (tab: string) => void;
     onLogout: () => void;
@@ -9,16 +9,13 @@ interface SidebarProps {
     onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }) => {
+const MandorSidebar: React.FC<MandorSidebarProps> = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }) => {
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-        { id: 'layanan', label: 'Daftar Layanan', icon: Briefcase },
-        { id: 'jasa', label: 'Daftar Jasa', icon: HardHat },
-        { id: 'mandor', label: 'Data Mandor', icon: Users },
         { id: 'jadwal', label: 'Jadwal & Detail', icon: Calendar },
-        { id: 'portofolio', label: 'Portofolio', icon: Image },
-        { id: 'pemesanan', label: 'Pemesanan / Order', icon: FileText },
-        { id: 'rab', label: 'Persetujuan RAB', icon: DollarSign },
+        { id: 'pemesanan', label: 'Pemesanan / Order', icon: ShoppingBag },
+        { id: 'rab', label: 'Kelola RAB', icon: FileText },
+        { id: 'tim', label: 'Tim Saya', icon: Users },
     ];
 
     return (
@@ -42,11 +39,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, is
                 <div className="p-8 pb-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-400 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-blue-200">
-                            B
+                            M
                         </div>
                         <div>
-                            <h1 className="font-extrabold text-gray-900 text-xl tracking-tight">Bizza Admin</h1>
-                            <p className="text-xs text-gray-500 font-medium tracking-wide text-blue-600">PROPERTY MANAGER</p>
+                            <h1 className="font-extrabold text-gray-900 text-xl tracking-tight">Mandor Area</h1>
+                            <p className="text-xs text-gray-500 font-medium tracking-wide text-blue-600">PROJECT LEADER</p>
                         </div>
                     </div>
                     {/* Close Button (Mobile Only) */}
@@ -68,7 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, is
                                     key={item.id}
                                     onClick={() => {
                                         setActiveTab(item.id);
-                                        onClose(); // Close sidebar on mobile when item selected
+                                        onClose();
                                     }}
                                     className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-bold text-sm relative overflow-hidden group
                                         ${isActive
@@ -99,7 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, is
                         <div className="p-2 bg-red-100 rounded-xl group-hover:bg-red-200 transition-colors">
                             <LogOut className="w-4 h-4" />
                         </div>
-                        Keluar Aplikasi
+                        Keluar
                     </button>
                 </div>
             </div>
@@ -107,4 +104,4 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, is
     );
 };
 
-export default Sidebar;
+export default MandorSidebar;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DollarSign, TrendingUp, CreditCard, ArrowUpRight, ArrowDownRight, Wallet, Calendar, Clock, Edit2, Eye, Trash2 } from 'lucide-react';
-import { initialOrders, Order } from './OrderList';
-import { OrderDetailModal } from './OrderDetailModal';
+import { initialOrders, Order } from '../order-admin/OrderList';
+import { OrderDetailModal } from '../order-admin/OrderDetailModal';
 
 export const FinanceOverview: React.FC = () => {
     // State

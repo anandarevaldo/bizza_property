@@ -15,4 +15,6 @@ export interface PaymentMethod {
 export interface ProblemType {
     id: string;
     label: string;
+    handymanType: string; // e.g., 'Tukang Atap', 'Tukang Pipa'
+    needsKenek?: boolean; // Recommendation flag
 }

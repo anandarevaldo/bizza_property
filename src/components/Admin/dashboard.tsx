@@ -1,19 +1,20 @@
 
 import React, { useState } from 'react';
 import Sidebar from './sidebar';
-import { DollarSign, ShoppingBag, Users, TrendingUp, Clock, ArrowRight, Activity, CalendarDays, Wallet, ArrowDownRight, CreditCard, Menu } from 'lucide-react';
+import { DollarSign, ShoppingBag, Users, TrendingUp, Clock, ArrowRight, Activity, CalendarDays, Wallet, ArrowDownRight, CreditCard, Menu, HardHat, Briefcase } from 'lucide-react';
 
 // Import sub-components
-import { ServiceList } from './ServiceList';
-import { JasaList } from './JasaList';
-import { HandymanList } from './HandymanList';
-import { ScheduleList } from './ScheduleList';
-import { PortfolioList } from './PortfolioList';
-import { OrderList, initialOrders } from './OrderList';
-import { initialHandymen } from './HandymanList';
-import { initialSchedules } from './ScheduleList';
-import { ScheduleDetailModal } from './ScheduleDetailModal';
-import { OrderDetailModal } from './OrderDetailModal';
+import { ServiceList } from '../layanan-admin/ServiceList';
+import { JasaList } from '../jasa-admin/JasaList';
+import { MandorList } from '../mandor-admin/MandorList';
+import { ScheduleList } from '../schedule-admin/ScheduleList';
+import { PortfolioList } from '../portofolio-admin/PortfolioList';
+import { OrderList, initialOrders } from '../order-admin/OrderList';
+import { initialMandors } from '../mandor-admin/MandorList';
+import { initialSchedules } from '../schedule-admin/ScheduleList';
+import { ScheduleDetailModal } from '../schedule-admin/ScheduleDetailModal';
+import { OrderDetailModal } from '../order-admin/OrderDetailModal';
+import { AdminRABApproval } from '../RAB/AdminRABApproval';
 
 interface MainDashboardParams {
     setActiveTab: (tab: string) => void;
@@ -45,9 +46,9 @@ const DashboardOverview: React.FC<MainDashboardParams> = ({ setActiveTab }) => {
     const totalOrders = initialOrders.length;
     const newOrdersToday = initialOrders.filter(o => o.date === new Date().toISOString().split('T')[0]).length; // Simply checking if matches today for demo
 
-    // 3. Tukang Aktif
-    const activeHandymen = initialHandymen.filter(h => h.status !== 'Off').length;
-    const workingHandymen = initialHandymen.filter(h => h.status === 'Busy').length;
+    // 3. Tukang Aktif (Renamed to Mandor)
+    const activeMandors = initialMandors.filter(h => h.status !== 'Off').length;
+    const workingMandors = initialMandors.filter(h => h.status === 'Busy').length;
 
     // 4. Growth - Mocked for now as we don't have historical data
     const growth = "+15.4%";
@@ -99,7 +100,7 @@ const DashboardOverview: React.FC<MainDashboardParams> = ({ setActiveTab }) => {
                 {[
                     { label: 'Total Pendapatan', value: totalRevenue, icon: DollarSign, color: 'text-white', bg: 'bg-gradient-to-br from-green-500 to-emerald-600', sub: '+12% dari bulan lalu' },
                     { label: 'Total Pesanan', value: `${totalOrders} Order`, icon: ShoppingBag, color: 'text-white', bg: 'bg-gradient-to-br from-blue-500 to-indigo-600', sub: `${newOrdersToday} order baru hari ini` },
-                    { label: 'Tukang Aktif', value: `${activeHandymen} Orang`, icon: Users, color: 'text-white', bg: 'bg-gradient-to-br from-purple-500 to-violet-600', sub: `${workingHandymen} sedang bertugas` },
+                    { label: 'Mandor Aktif', value: `${activeMandors} Orang`, icon: Users, color: 'text-white', bg: 'bg-gradient-to-br from-purple-500 to-violet-600', sub: `${workingMandors} sedang bertugas` },
                     { label: 'Pertumbuhan', value: growth, icon: TrendingUp, color: 'text-white', bg: 'bg-gradient-to-br from-orange-500 to-red-500', sub: 'Tren positif' },
                 ].map((stat, i) => (
                     <div key={i} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-100 hover:shadow-2xl hover:shadow-gray-200 transition-all duration-300 group hover:-translate-y-1">
@@ -152,7 +153,14 @@ const DashboardOverview: React.FC<MainDashboardParams> = ({ setActiveTab }) => {
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 text-base mb-0.5">{app.customerName}</h4>
-                                        <p className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md inline-block">{app.service}</p>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                            <p className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md border border-blue-100 flex items-center gap-1">
+                                                <Briefcase className="w-3 h-3" /> {app.service}
+                                            </p>
+                                            <p className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-md border border-orange-100 flex items-center gap-1">
+                                                <HardHat className="w-3 h-3" /> {app.mandor}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -330,14 +338,16 @@ const DashboardAdmin = () => {
                 return <ServiceList />;
             case 'jasa':
                 return <JasaList />;
-            case 'tukang':
-                return <HandymanList />;
+            case 'mandor':
+                return <MandorList />;
             case 'jadwal':
                 return <ScheduleList />;
             case 'portofolio':
                 return <PortfolioList />;
             case 'pemesanan':
                 return <OrderList />;
+            case 'rab':
+                return <AdminRABApproval />;
             default:
                 return <DashboardOverview setActiveTab={setActiveTab} />;
         }

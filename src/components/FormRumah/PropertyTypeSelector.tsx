@@ -16,7 +16,6 @@ export const PropertyTypeSelector: React.FC<PropertyTypeSelectorProps> = ({ sele
             <div className="grid grid-cols-3 gap-4">
                 {[
                     { id: 'Apartment', icon: Building, label: 'Apartment' },
-                    { id: 'Ruko', icon: Store, label: 'Ruko' },
                     { id: 'Rumah', icon: Home, label: 'Rumah' }
                 ].map((type) => (
                     <div

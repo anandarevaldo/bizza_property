@@ -4,11 +4,13 @@ import { BookingFormProps, PaymentMethod, paymentMethods } from './types';
 import { PropertyTypeSelector } from './PropertyTypeSelector';
 import { ProblemDescription } from './ProblemDescription';
 import { PhotoUpload } from './PhotoUpload';
-import { AddressForm } from './AddressForm';
+import { AddressSelector } from './AddressSelector';
 import { ScheduleForm } from './ScheduleForm';
 import { BudgetSelector } from './BudgetSelector';
 import { OrderSummary } from './OrderSummary';
 import { PaymentMethodModal } from './PaymentMethodModal';
+import { createHouseOrder } from '../../lib/actions/order';
+import { supabase } from '../../lib/supabaseClient';
 
 const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
     // State Management
@@ -30,6 +32,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [tempSelectedPayment, setTempSelectedPayment] = useState<PaymentMethod | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleImagesChange = (newImages: File[]) => {
         setImages((prevImages) => {
@@ -58,7 +61,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
         }
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!description || !addressSearch || !selectedDate || !selectedTime || !budget) {
             alert('Mohon lengkapi semua data wajib (*) sebelum melanjutkan.');
             return;
@@ -68,20 +71,66 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
             return;
         }
 
-        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        const formData = {
-            propertyType,
-            description,
-            address: { search: addressSearch, detail: addressDetail },
-            date: `${selectedDate.getDate()} ${monthNames[selectedDate.getMonth()]} ${selectedDate.getFullYear()}`,
-            time: selectedTime,
-            budget,
-            orderCode,
-            paymentMethod: selectedPaymentMethod.name
-        };
+        try {
+            setIsLoading(true);
 
-        console.log('Form Data:', formData);
-        alert('Pesanan berhasil dibuat! (Simulasi)');
+            // 1. Get Current User
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+            if (authError || !user) {
+                alert('Anda harus login terlebih dahulu untuk membuat pesanan.');
+                // Optionally redirect to login: router.push('/login');
+                return;
+            }
+
+            const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+            // 2. Prepare FormData
+            const formData = new FormData();
+            formData.append('userId', user.id);
+            formData.append('propertyType', propertyType);
+            formData.append('description', description);
+            formData.append('addressSearch', addressSearch);
+            formData.append('addressDetail', addressDetail);
+            formData.append('date', selectedDate.toISOString()); // Use ISO string for consistency
+            formData.append('time', selectedTime || '');
+            formData.append('budget', budget);
+            formData.append('paymentMethod', selectedPaymentMethod.name);
+
+            // Append images
+            images.forEach((image) => {
+                formData.append('images', image);
+            });
+
+            // 3. Call Server Action
+            const result = await createHouseOrder(formData);
+
+            if (result.success) {
+                alert('Pesanan berhasil dibuat!');
+                switchView('home');
+            } else {
+                throw new Error(result.message);
+            }
+
+        } catch (error: any) {
+            console.error('Submission error:', error);
+            alert(`Gagal membuat pesanan: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleRequestSurvey = () => {
+        if (!budget) {
+            alert('Mohon pilih range budget terlebih dahulu.');
+            return;
+        }
+
+        // Simulating sending data to server/Mandor
+        localStorage.setItem('srv_simulation_budget', budget);
+        console.log('Survey Requested with Budget:', budget);
+
+        alert('Permintaan survey berhasil dikirim ke Mandor! Data estimasi budget telah tersimpan.');
         switchView('home');
     };
 
@@ -147,7 +196,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
                             onRemoveImage={removeImage}
                         />
 
-                        <AddressForm
+                        <AddressSelector
                             addressSearch={addressSearch}
                             onAddressSearchChange={setAddressSearch}
                             addressDetail={addressDetail}
@@ -181,7 +230,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
                             setShowPaymentModal(true);
                         }}
                         onSubmit={handleSubmit}
+                        onRequestSurvey={handleRequestSurvey}
                         formattedPrice={formattedPrice}
+                        isLoading={isLoading}
                     />
                 </div>
             </div>

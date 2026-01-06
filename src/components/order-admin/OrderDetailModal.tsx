@@ -6,7 +6,7 @@ interface Order {
     id: string;
     orderNumber: string;
     customer: string;
-    type: 'Material' | 'Layanan' | 'Jasa';
+    type: 'Jasa Tukang' | 'Borongan' | 'Material' | 'Layanan' | 'Jasa';
     total: string;
     date: string;
     status: 'Paid' | 'Unpaid' | 'Process' | 'Cancelled';

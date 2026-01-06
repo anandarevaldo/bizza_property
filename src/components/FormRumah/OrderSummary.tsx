@@ -9,7 +9,9 @@ interface OrderSummaryProps {
     selectedPaymentMethod: PaymentMethod | null;
     onSelectPaymentClick: () => void;
     onSubmit: () => void;
+    onRequestSurvey?: () => void;
     formattedPrice: (price: number) => string;
+    isLoading?: boolean;
 }
 
 export const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -19,7 +21,9 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
     selectedPaymentMethod,
     onSelectPaymentClick,
     onSubmit,
+    onRequestSurvey,
     formattedPrice,
+    isLoading = false,
 }) => {
     return (
         <div className="lg:w-[420px] shrink-0">
@@ -69,12 +73,24 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                 </div>
 
                 {/* Submit Button */}
-                <button
-                    onClick={onSubmit}
-                    className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 mt-6"
-                >
-                    Bayar Sekarang
-                </button>
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-3 mt-6">
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onSubmit}
+                            disabled={isLoading}
+                            className={`flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            {isLoading ? 'Memproses...' : 'Pesan Sekarang'}
+                        </button>
+                        <button
+                            onClick={onRequestSurvey || (() => { alert('Permintaan survey telah dikirim ke Mandor'); })}
+                            className="flex-1 bg-white text-blue-600 border-2 border-blue-600 py-4 rounded-2xl font-bold text-lg hover:bg-blue-50 transition-colors"
+                        >
+                            Ajukan Survey
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

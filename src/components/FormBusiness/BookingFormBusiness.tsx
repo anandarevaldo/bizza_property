@@ -76,6 +76,21 @@ const BookingFormBusiness: React.FC<BookingFormBusinessProps> = ({ switchView })
         console.log('Business Form Data:', formData);
         alert('Pesanan Bisnis berhasil dibuat! (Simulasi)');
         switchView('home');
+        switchView('home');
+    };
+
+    const handleRequestSurvey = () => {
+        if (!budget) {
+            alert('Mohon pilih range budget terlebih dahulu.');
+            return;
+        }
+
+        // Simulating sending data to server/Mandor
+        localStorage.setItem('srv_simulation_budget', budget);
+        console.log('Business Survey Requested with Budget:', budget);
+
+        alert('Permintaan survey bisnis berhasil dikirim! Estimasi budget tersimpan.');
+        switchView('home');
     };
 
     const formattedPrice = (price: number) => {
@@ -180,6 +195,7 @@ const BookingFormBusiness: React.FC<BookingFormBusinessProps> = ({ switchView })
                             setShowPaymentModal(true);
                         }}
                         onSubmit={handleSubmit}
+                        onRequestSurvey={handleRequestSurvey}
                         formattedPrice={formattedPrice}
                     />
                 </div>

@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, MapPin, User, HardHat, CheckCircle2, X, ChevronDown } from 'lucide-react';
-import { initialHandymen } from './HandymanList';
+import { initialMandors } from '../mandor-admin/MandorList';
+import { Mandor } from '../Admin/types';
 import { serviceTypes } from '../Layanan/RepairServiceSelection/constants';
 
 interface Schedule {
@@ -11,8 +12,8 @@ interface Schedule {
     date: string;
     time: string;
     address: string;
-    handyman: string;
-    status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
+    mandor: string;
+    status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled' | 'Request Survey';
 }
 
 interface ScheduleEditModalProps {
@@ -51,7 +52,7 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                     <div>
                         <h3 className="text-xl font-black text-gray-900">{schedule ? 'Edit Jadwal' : 'Jadwal Baru'}</h3>
                         <p className="text-gray-500 text-xs font-medium mt-1">
-                            {schedule ? `Edit data kunjungan` : 'Buat jadwal kunjungan baru'}
+                            {schedule ? `Edit data kunjungan` : 'Admin menentukan Mandor untuk proyek ini'}
                         </p>
                     </div>
                     <button onClick={onClose} className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors group border border-transparent hover:border-gray-200">
@@ -156,7 +157,7 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                         </h4>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Layanan</label>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Keahlian</label>
                                 <div className="relative">
                                     <select
                                         value={formData.service || ''}
@@ -164,7 +165,7 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                                         className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all font-medium text-sm appearance-none bg-white"
                                         required
                                     >
-                                        <option value="" disabled>Pilih Layanan</option>
+                                        <option value="" disabled>Pilih Keahlian</option>
                                         {serviceTypes.map((service) => (
                                             <option key={service.id} value={service.name}>
                                                 {service.name}
@@ -175,18 +176,18 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Tukang</label>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Mandor (Penanggung Jawab)</label>
                                 <div className="relative">
                                     <select
-                                        value={formData.handyman || ''}
-                                        onChange={e => setFormData({ ...formData, handyman: e.target.value })}
+                                        value={formData.mandor || ''}
+                                        onChange={e => setFormData({ ...formData, mandor: e.target.value })}
                                         className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all font-medium text-sm appearance-none bg-white"
                                         required
                                     >
-                                        <option value="" disabled>Pilih Tukang</option>
-                                        {initialHandymen.map((handyman) => (
-                                            <option key={handyman.id} value={handyman.name}>
-                                                {handyman.name}
+                                        <option value="" disabled>Pilih Mandor</option>
+                                        {initialMandors.map((mandor: Mandor) => (
+                                            <option key={mandor.id} value={mandor.name}>
+                                                {mandor.name}
                                             </option>
                                         ))}
                                     </select>

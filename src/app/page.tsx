@@ -10,6 +10,7 @@ import Footer from '../components/footer';
 import Login from './auth/Login/Login';
 import Register from './auth/Register/Register';
 import AdminDashboard from '../components/Admin/dashboard';
+import MandorDashboard from '../components/Mandor/MandorDashboard';
 // ServicePage removed
 import AboutUsPage from './User/AboutUs/aboutUs';
 import ChatBot from '../components/ChatBot';
@@ -60,13 +61,13 @@ const SEARCH_RESULTS: SearchResultItem[] = [
 // --- Components ---
 
 export default function BizzaPropertyApp() {
-  const [currentView, setCurrentView] = useState<'home' | 'search' | 'login' | 'register' | 'admin' | 'layanan' | 'portfolio' | 'portfolio-details' | 'about' | 'booking-form' | 'booking-form-business' | 'handyman-selection' | 'booking-form-handyman' | 'history' | 'service-repair-booking' | 'repair-service-selection' | 'material-selection'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'search' | 'login' | 'register' | 'admin' | 'mandor' | 'layanan' | 'portfolio' | 'portfolio-details' | 'about' | 'booking-form' | 'booking-form-business' | 'handyman-selection' | 'booking-form-handyman' | 'history' | 'service-repair-booking' | 'repair-service-selection' | 'material-selection'>('home');
   const [selectedPortfolioProject, setSelectedPortfolioProject] = useState<Project | undefined>(undefined);
   const [selectedHandymanType, setSelectedHandymanType] = useState<string>('');
   const [selectedServiceType, setSelectedServiceType] = useState<string>('');
   const [selectedMaterials, setSelectedMaterials] = useState<any[]>([]);
 
-  const switchView = (view: 'home' | 'search' | 'login' | 'register' | 'admin' | 'layanan' | 'portfolio' | 'portfolio-details' | 'about' | 'booking-form' | 'booking-form-business' | 'handyman-selection' | 'booking-form-handyman' | 'history' | 'service-repair-booking' | 'repair-service-selection' | 'material-selection') => {
+  const switchView = (view: 'home' | 'search' | 'login' | 'register' | 'admin' | 'mandor' | 'layanan' | 'portfolio' | 'portfolio-details' | 'about' | 'booking-form' | 'booking-form-business' | 'handyman-selection' | 'booking-form-handyman' | 'history' | 'service-repair-booking' | 'repair-service-selection' | 'material-selection') => {
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -97,6 +98,11 @@ export default function BizzaPropertyApp() {
       {/* ================= VIEW: ADMIN ================= */}
       {currentView === 'admin' && (
         <AdminDashboard />
+      )}
+
+      {/* ================= VIEW: MANDOR ================= */}
+      {currentView === 'mandor' && (
+        <MandorDashboard />
       )}
 
       {/* ================= VIEW: LAYANAN ================= */}

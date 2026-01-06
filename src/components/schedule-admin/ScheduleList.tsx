@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Calendar as CalendarIcon, Clock, MapPin, User, ChevronRight, HardHat, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, MapPin, User, ChevronRight, ChevronLeft, HardHat, Plus } from 'lucide-react';
 import { ScheduleEditModal } from './ScheduleEditModal';
 import { ScheduleDetailModal } from './ScheduleDetailModal';
 
@@ -11,19 +10,20 @@ export interface Schedule {
     date: string;
     time: string;
     address: string;
-    handyman: string;
-    status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
+    mandor: string;
+    status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled' | 'Request Survey';
 }
 
 export const initialSchedules: Schedule[] = [
-    { id: '1', customerName: 'Ibu Ratna', service: 'Perbaikan Kebocoran', date: '2025-12-28', time: '10:00', address: 'Jl. Merpati No. 12, Jakarta Selatan', handyman: 'Pak Budi Santoso', status: 'Confirmed' },
-    { id: '2', customerName: 'Bapak Hendra', service: 'Instalasi AC', date: '2025-12-28', time: '14:00', address: 'Cluster Harmoni Blok B2, Tangerang', handyman: 'Pak Slamet Riyadi', status: 'Pending' },
-    { id: '3', customerName: 'Cafe Kopi Kenangan', service: 'Pengecatan Interior', date: '2025-12-29', time: '09:00', address: 'Ruko Mall of Indonesia, Jakarta Utara', handyman: 'Tim Pak Joko', status: 'Confirmed' },
+    { id: '1', customerName: 'Ibu Ratna', service: 'Perbaikan Kebocoran', date: '2025-12-28', time: '10:00', address: 'Jl. Merpati No. 12, Jakarta Selatan', mandor: 'Pak Budi Santoso', status: 'Confirmed' },
+    { id: '2', customerName: 'Bapak Hendra', service: 'Instalasi AC', date: '2025-12-28', time: '14:00', address: 'Cluster Harmoni Blok B2, Tangerang', mandor: 'Pak Slamet Riyadi', status: 'Pending' },
+    { id: '3', customerName: 'Cafe Kopi Kenangan', service: 'Pengecatan Interior', date: '2025-12-29', time: '09:00', address: 'Ruko Mall of Indonesia, Jakarta Utara', mandor: 'Tim Pak Joko', status: 'Confirmed' },
 ];
 
 export const ScheduleList: React.FC = () => {
     const [schedules, setSchedules] = useState<Schedule[]>(initialSchedules);
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [viewDate, setViewDate] = useState(new Date());
 
     // Separate states for modals
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -37,15 +37,49 @@ export const ScheduleList: React.FC = () => {
             case 'Pending': return 'bg-yellow-500 text-white shadow-yellow-200';
             case 'Completed': return 'bg-green-600 text-white shadow-green-200';
             case 'Cancelled': return 'bg-red-500 text-white shadow-red-200';
+            case 'Request Survey': return 'bg-purple-600 text-white shadow-purple-200';
             default: return 'bg-gray-500 text-white';
         }
     };
 
     const handleDateClick = (day: number) => {
-        const date = new Date();
-        date.setDate(day);
-        const dateString = date.toISOString().split('T')[0];
+        const date = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+        const dateString = localDate.toISOString().split('T')[0];
         setSelectedDate(dateString);
+    };
+
+    const handlePrevMonth = () => {
+        setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+    };
+
+    const handleNextMonth = () => {
+        setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+    };
+
+    const getDaysInMonth = (year: number, month: number) => {
+        return new Date(year, month + 1, 0).getDate();
+    };
+
+    const getFirstDayOfMonth = (year: number, month: number) => {
+        return new Date(year, month, 1).getDay(); // 0 = Sunday
+    };
+
+    const getDateStatus = (day: number) => {
+        const date = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+        const dateString = localDate.toISOString().split('T')[0];
+
+        const daySchedules = schedules.filter(s => s.date === dateString);
+        if (daySchedules.length === 0) return null;
+
+        if (daySchedules.some(s => s.status === 'Confirmed')) return 'bg-blue-600';
+        if (daySchedules.some(s => s.status === 'Request Survey')) return 'bg-purple-600';
+        if (daySchedules.some(s => s.status === 'Pending')) return 'bg-yellow-500';
+        if (daySchedules.some(s => s.status === 'Completed')) return 'bg-green-600';
+        return 'bg-gray-400';
     };
 
     const handleAdd = () => {
@@ -78,6 +112,10 @@ export const ScheduleList: React.FC = () => {
     const filteredSchedules = schedules.filter(s => s.date === selectedDate);
     const displaySchedules = filteredSchedules;
 
+    const daysInMonth = getDaysInMonth(viewDate.getFullYear(), viewDate.getMonth());
+    const firstDay = getFirstDayOfMonth(viewDate.getFullYear(), viewDate.getMonth());
+    const weekHeaders = ['M', 'S', 'S', 'R', 'K', 'J', 'S'];
+
     return (
         <div className="bg-white rounded-[2.5rem] p-10 shadow-xl shadow-gray-100 border border-gray-100 animate-fade-in relative z-10">
             <div className="flex items-center gap-3 mb-10">
@@ -95,28 +133,54 @@ export const ScheduleList: React.FC = () => {
                 <div className="xl:w-1/3">
                     <div className="bg-white rounded-[2rem] p-8 border-2 border-gray-100 shadow-lg shadow-gray-50 sticky top-4">
                         <div className="flex items-center justify-between mb-8">
-                            <h3 className="font-exrabold text-xl text-gray-900 font-bold">Desember 2025</h3>
+                            <h3 className="font-exrabold text-xl text-gray-900 font-bold">
+                                {viewDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                            </h3>
                             <div className="flex gap-2">
-                                <button className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><ChevronRight className="w-5 h-5 rotate-180 text-gray-600" /></button>
-                                <button className="p-2 hover:bg-gray-100 rounded-xl transition-colors"><ChevronRight className="w-5 h-5 text-gray-600" /></button>
+                                <button
+                                    onClick={handlePrevMonth}
+                                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                                >
+                                    <ChevronLeft className="w-5 h-5 text-gray-600" />
+                                </button>
+                                <button
+                                    onClick={handleNextMonth}
+                                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                                >
+                                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                                </button>
                             </div>
                         </div>
                         <div className="grid grid-cols-7 gap-3 text-center mb-4">
-                            {['M', 'S', 'S', 'R', 'K', 'J', 'S'].map(d => <div key={d} className="text-gray-400 font-bold text-sm py-2">{d}</div>)}
-                            {[...Array(31)].map((_, i) => {
+                            {weekHeaders.map(d => <div key={d} className="text-gray-400 font-bold text-sm py-2">{d}</div>)}
+
+                            {[...Array(firstDay)].map((_, i) => (
+                                <div key={`empty-${i}`} className="aspect-square"></div>
+                            ))}
+
+                            {[...Array(daysInMonth)].map((_, i) => {
                                 const day = i + 1;
-                                const date = new Date();
-                                date.setDate(day);
-                                const dateString = date.toISOString().split('T')[0];
+                                const date = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+                                const offset = date.getTimezoneOffset();
+                                const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+                                const dateString = localDate.toISOString().split('T')[0];
                                 const isSelected = selectedDate === dateString;
+                                const statusDot = getDateStatus(day);
 
                                 return (
                                     <div
-                                        key={i}
+                                        key={day}
                                         onClick={() => handleDateClick(day)}
-                                        className={`aspect-square flex items-center justify-center rounded-xl font-bold text-sm cursor-pointer transition-all hover:scale-110 ${isSelected ? 'bg-blue-600 text-white shadow-lg shadow-blue-300' : 'text-gray-700 hover:bg-blue-50'}`}
+                                        className={`aspect-square flex flex-col items-center justify-center rounded-xl font-bold text-sm cursor-pointer transition-all hover:scale-110 relative
+                                            ${isSelected ? 'bg-blue-600 text-white shadow-lg shadow-blue-300' : 'text-gray-700 hover:bg-blue-50'}`}
                                     >
                                         {day}
+                                        {statusDot && !isSelected && (
+                                            <div className={`w-1.5 h-1.5 rounded-full mt-1 ${statusDot}`}></div>
+                                        )}
+                                        {statusDot && isSelected && (
+                                            <div className="w-1.5 h-1.5 rounded-full mt-1 bg-white/70"></div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -141,7 +205,9 @@ export const ScheduleList: React.FC = () => {
                 {/* List Side */}
                 <div className="xl:w-2/3 space-y-6">
                     <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-bold text-xl text-gray-900">Jadwal Tanggal {selectedDate}</h3>
+                        <h3 className="font-bold text-xl text-gray-900">
+                            Jadwal {new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </h3>
                         <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{displaySchedules.length} Appointment</span>
                     </div>
 
@@ -187,7 +253,7 @@ export const ScheduleList: React.FC = () => {
                                                 <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
                                                     <HardHat className="w-4 h-4 text-orange-500" /> Ditugaskan ke
                                                 </div>
-                                                <p className="font-bold text-gray-900">{schedule.handyman}</p>
+                                                <p className="font-bold text-gray-900">{schedule.mandor}</p>
                                             </div>
                                         </div>
 
@@ -231,3 +297,4 @@ export const ScheduleList: React.FC = () => {
         </div>
     );
 };
+

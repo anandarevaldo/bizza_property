@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Phone } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
 
 interface RegisterFormProps {
     switchView: (view: any) => void;
@@ -20,15 +21,42 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ switchView }) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleRegister = (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
+
         if (formData.password !== formData.confirmPassword) {
             alert('Password tidak cocok!');
             return;
         }
-        console.log('Register Data:', formData);
-        alert('Registrasi Berhasil! Silahkan Login.');
-        switchView('login');
+
+        try {
+            const { data, error } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                options: {
+                    data: {
+                        full_name: formData.name,
+                        phone: formData.phone,
+                        role: 'CLIENT', // Default role
+                    },
+                },
+            });
+
+            if (error) {
+                alert(error.message);
+                return;
+            }
+
+            // Check if session is established (auto sign-in) or email verification needed
+            if (data.user) {
+                alert('Registrasi Berhasil! Silakan cek email Anda untuk verifikasi atau langsung login jika konfirmasi email dimatikan.');
+                switchView('login');
+            }
+
+        } catch (err) {
+            console.error('Registration error:', err);
+            alert('Terjadi kesalahan saat registrasi.');
+        }
     };
 
     return (

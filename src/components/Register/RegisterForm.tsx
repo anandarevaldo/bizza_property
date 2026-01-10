@@ -34,9 +34,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ switchView }) => {
                 email: formData.email,
                 password: formData.password,
                 options: {
+                    emailRedirectTo: `${window.location.origin}/auth/Login`,
                     data: {
                         full_name: formData.name,
                         phone: formData.phone,
+                        no_hp: formData.phone,
                         role: 'CLIENT', // Default role
                     },
                 },

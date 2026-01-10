@@ -1,7 +1,8 @@
+'use client';
 
 import React, { useState } from 'react';
 import { Search, FileText, Briefcase, Users } from 'lucide-react';
-import { MandorOrderDetailModal } from './MandorOrderDetailModal';
+import { MandorOrderDetailModal } from './OrderDetailModal';
 
 // Mock Team Data (Synced with TeamManagement)
 const internalTeam = [

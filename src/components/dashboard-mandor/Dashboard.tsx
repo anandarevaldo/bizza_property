@@ -1,12 +1,13 @@
+'use client';
 
 import React, { useState } from 'react';
 import MandorSidebar from './MandorSidebar';
-import { RABManagement } from './RABManagement';
-import { TeamManagement } from './TeamManagement';
+import { RABList } from '../rab-mandor/RABList';
+import { TeamList } from '../team-mandor/TeamList';
 import { MandorScheduleList } from './MandorScheduleList';
-import { MandorOrderList } from './MandorOrderList';
-import { MandorOrderDetailModal } from './MandorOrderDetailModal';
-import { RABDetailModal } from './RABDetailModal';
+import { MandorOrderList } from '../order-mandor/OrderList';
+import { MandorOrderDetailModal } from '../order-mandor/OrderDetailModal';
+import { RABDetailModal } from '../rab-mandor/RABDetailModal';
 import { Menu, DollarSign, Users, Briefcase, CheckCircle, Clock, FileText, X, Save, Edit3, ChevronRight } from 'lucide-react';
 
 interface Project {
@@ -120,7 +121,7 @@ const MandorDashboard = () => {
                     </div>
                     {/* Decorative Elements */}
                     <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/20 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/20 rounded-full -ml-10 -mb-10 blur-3xl"></div>
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/20 rounded-full -ml-10 -mb-10 blur-3xl"></div>
                 </div>
 
                 {/* Stats Grid */}
@@ -277,8 +278,8 @@ const MandorDashboard = () => {
             case 'dashboard': return <DashboardOverview onNavigate={setActiveTab} />;
             case 'jadwal': return <MandorScheduleList />;
             case 'pemesanan': return <MandorOrderList />;
-            case 'rab': return <RABManagement />;
-            case 'tim': return <TeamManagement />;
+            case 'rab': return <RABList />;
+            case 'tim': return <TeamList />;
             default: return <DashboardOverview onNavigate={setActiveTab} />;
         }
     };

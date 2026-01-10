@@ -1,8 +1,9 @@
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, MapPin, User, HardHat, CheckCircle2, X, ChevronDown } from 'lucide-react';
 import { initialMandors } from '../mandor-admin/MandorList';
-import { Mandor } from '../Admin/types';
+import { Mandor } from '../dashboard-admin/types';
 import { serviceTypes } from '../Layanan/RepairServiceSelection/constants';
 
 interface Schedule {

@@ -9,7 +9,8 @@ import { ScheduleForm } from './ScheduleForm';
 import { BudgetSelector } from './BudgetSelector';
 import { OrderSummary } from './OrderSummary';
 import { PaymentMethodModal } from './PaymentMethodModal';
-import { createHouseOrder } from '../../lib/actions/order';
+// import { createHouseOrder } from '../../lib/actions/order';
+import { orderService } from '../../lib/services/orderService';
 import { supabase } from '../../lib/supabaseClient';
 
 const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
@@ -79,38 +80,36 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
 
             if (authError || !user) {
                 alert('Anda harus login terlebih dahulu untuk membuat pesanan.');
-                // Optionally redirect to login: router.push('/login');
                 return;
             }
 
-            const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            // 2. Prepare Data
+            const fullAddress = `${addressSearch}, ${addressDetail}`;
 
-            // 2. Prepare FormData
-            const formData = new FormData();
-            formData.append('userId', user.id);
-            formData.append('propertyType', propertyType);
-            formData.append('description', description);
-            formData.append('addressSearch', addressSearch);
-            formData.append('addressDetail', addressDetail);
-            formData.append('date', selectedDate.toISOString()); // Use ISO string for consistency
-            formData.append('time', selectedTime || '');
-            formData.append('budget', budget);
-            formData.append('paymentMethod', selectedPaymentMethod.name);
-
-            // Append images
-            images.forEach((image) => {
-                formData.append('images', image);
+            // 3. Create Order (Client Side)
+            const order = await orderService.createOrder({
+                userId: user.id,
+                propertyType,
+                description,
+                address: fullAddress,
+                budget,
+                selectedDate: selectedDate ? selectedDate.toISOString() : new Date().toISOString(),
+                selectedTime: selectedTime || '',
+                paymentMethod: selectedPaymentMethod.name
             });
 
-            // 3. Call Server Action
-            const result = await createHouseOrder(formData);
+            if (!order) throw new Error('Gagal membuat pesanan.');
 
-            if (result.success) {
-                alert('Pesanan berhasil dibuat!');
-                switchView('home');
-            } else {
-                throw new Error(result.message);
+            // 4. Upload Images (Client Side)
+            for (const image of images) {
+                if (image.size > 0) {
+                    const publicUrl = await orderService.uploadOrderImage(image, order.pesanan_id.toString(), user.id);
+                    await orderService.createDocumentation(order.pesanan_id, user.id, publicUrl);
+                }
             }
+
+            alert('Pesanan berhasil dibuat!');
+            switchView('home');
 
         } catch (error: any) {
             console.error('Submission error:', error);

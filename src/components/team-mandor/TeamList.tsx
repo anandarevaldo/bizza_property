@@ -1,3 +1,4 @@
+'use client';
 
 import React, { useState } from 'react';
 import { Plus, User, Phone, MapPin, Trash2, Shield, Star, Users, Edit2, MessageSquare } from 'lucide-react';
@@ -25,7 +26,7 @@ export const initialTeam: TeamMember[] = [
     { id: 3, name: 'Joko Widodo', role: 'Pipa', phone: '081298765432', skill: 'Expert', rating: 4.9, experience: '10 Tahun', bio: 'Mengatasi segala masalah kebocoran pipa.' },
 ];
 
-export const TeamManagement: React.FC = () => {
+export const TeamList: React.FC = () => {
     const [team, setTeam] = useState<TeamMember[]>(initialTeam);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);

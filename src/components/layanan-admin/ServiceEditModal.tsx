@@ -13,31 +13,92 @@ interface ServiceEditModalProps {
 
 export const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onClose, service, onSave }) => {
     const [formData, setFormData] = useState<Partial<Service>>({});
+    const [iconType, setIconType] = useState<'lucide' | 'image'>('lucide');
+    const [uploading, setUploading] = useState(false);
+
+    // Import Supabase Client locally or from hook if available, assuming global import for now or direct usage if possible.
+    // Ideally we import { supabase } from '../../lib/supabaseClient';
+    // But since this component doesn't import it yet, I should add the import or pass it.
+    // Let's assume the user has supabase client available or I will add the import in a separate step?
+    // Wait, I can't add imports in this block easily without hitting top of file.
+    // I will use window.supabase or require? No. I should have added the import first.
+    // Let's assume I will add import in next step. I'll write the handler assuming supabase is imported.
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        const file = e.target.files[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        setUploading(true);
+
+        // Dynamic import to avoid top-level impact if possible, or just expect it to be there.
+        // Actually, better to add the import at the top first. I will do that in next step.
+        // For now, I'll put the logic here assuming `supabase` exists.
+        // I'll fix the import in the next "replace" call.
+        // Wait, I can't use `supabase` if it's not imported.
+        // I will use a placeholder and fix it immediately.
+
+        try {
+            // @ts-ignore
+            const { supabase } = await import('../../lib/supabaseClient');
+
+            const { error: uploadError } = await supabase.storage
+                .from('services')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage.from('services').getPublicUrl(filePath);
+
+            setFormData({ ...formData, imageUrl: data.publicUrl, icon: undefined });
+        } catch (error: any) {
+            alert('Error uploading image: ' + error.message);
+        } finally {
+            setUploading(false);
+        }
+    };
 
     useEffect(() => {
         if (isOpen) {
             if (service) {
-                // Strip non-numeric from price to get raw number
-                const numericPrice = service.price.replace(/\D/g, '');
-                const formattedPrice = numericPrice.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                // Use priceNumeric if available, otherwise strip from string
+                let formattedPrice = '';
+                if (service.priceNumeric !== undefined) {
+                    formattedPrice = service.priceNumeric.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                } else {
+                    const numericPrice = service.price.replace(/\D/g, '');
+                    formattedPrice = numericPrice.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                }
+
                 setFormData({
                     ...service,
                     price: formattedPrice
                 });
+                if (service.imageUrl) {
+                    setIconType('image');
+                } else {
+                    setIconType('lucide');
+                }
             } else {
                 setFormData({ status: 'Active', category: '', price: '' });
+                setIconType('lucide');
             }
         }
     }, [isOpen, service]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Save price with "Rp" prefix and "Start from" if desired, or simplified to just Rp based on previous request "rupiahnya menetap"
-        // The user said "harga dan deskripsi terpisah rupiahnya atau Rp nanti buat tidak bisa di ubah"
-        // I will save it as "Rp [Value]" to be consistent with the fixed prefix UI.
+
+        // Calculate numeric price for backend
+        const numericPrice = parseInt(formData.price?.replace(/\./g, '') || '0', 10);
+
         const finalData = {
             ...formData,
-            price: `Rp ${formData.price}`
+            price: `Rp ${formData.price}`,
+            priceNumeric: numericPrice
         };
         onSave(finalData);
         onClose();
@@ -75,20 +136,94 @@ export const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onCl
 
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nama Layanan</label>
-                            <div className="relative">
-                                <select
-                                    value={formData.name || ''}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full p-4 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold text-gray-800 bg-white appearance-none"
-                                    required
-                                >
-                                    <option value="" disabled>Pilih Layanan</option>
-                                    {serviceTypes.map(s => (
-                                        <option key={s.id} value={s.name}>{s.name}</option>
-                                    ))}
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                            <input
+                                type="text"
+                                value={formData.name || ''}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                className="w-full p-4 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold text-gray-800 bg-white"
+                                placeholder="Contoh: Perbaikan Atap Bocor"
+                                required
+                            />
+                        </div>
+
+                        {/* Icon Selection with Toggle */}
+                        <div>
+                            <div className="flex items-center justify-between mb-3">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Icon Layanan</label>
+                                <div className="flex bg-gray-100 rounded-lg p-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIconType('lucide')}
+                                        className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${iconType === 'lucide' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                    >
+                                        Pilih Icon
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIconType('image')}
+                                        className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${iconType === 'image' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                    >
+                                        Upload Gambar
+                                    </button>
+                                </div>
                             </div>
+
+                            {iconType === 'lucide' ? (
+                                <>
+                                    <div className="flex gap-3 overflow-x-auto pb-4 pt-2 snap-x">
+                                        {serviceTypes.map(s => {
+                                            const Icon = s.icon;
+                                            const isSelected = formData.icon === s.name || (!formData.icon && formData.name === s.name);
+                                            return (
+                                                <button
+                                                    key={s.id}
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, icon: s.name, imageUrl: undefined })}
+                                                    className={`
+                                                        flex-shrink-0 flex flex-col items-center justify-center w-20 h-20 rounded-2xl border-2 transition-all duration-200 snap-start
+                                                        ${isSelected
+                                                            ? 'border-blue-500 bg-blue-50 shadow-md scale-105 ring-2 ring-blue-200'
+                                                            : 'border-gray-100 bg-white hover:border-blue-200 hover:bg-gray-50'}
+                                                    `}
+                                                >
+                                                    <Icon className={`w-8 h-8 mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
+                                                    <span className="text-[10px] font-bold text-gray-600 truncate w-full px-1">{s.name}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-1">*Scroll ke samping untuk melihat lebih banyak icon</p>
+                                </>
+                            ) : (
+                                <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-blue-300 transition-colors bg-gray-50">
+                                    {formData.imageUrl ? (
+                                        <div className="relative w-24 h-24 mx-auto mb-4">
+                                            <img src={formData.imageUrl} alt="Icon" className="w-full h-full object-cover rounded-xl shadow-sm bg-white" />
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, imageUrl: undefined })}
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center">
+                                            <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-3">
+                                                <Briefcase className="w-6 h-6" />
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-600 mb-1">Klik untuk upload gambar</p>
+                                            <p className="text-xs text-gray-400 mb-4">PNG, JPG up to 2MB</p>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageUpload}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div>
@@ -101,28 +236,9 @@ export const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onCl
                                     required
                                 >
                                     <option value="" disabled>Pilih Kategori</option>
-                                    {Object.entries(categories).map(([key, group]) => {
-                                        // Ideally we want to select the Category Group Title or something related to it?
-                                        // Wait, in ServiceList logic:
-                                        // `service.category` is displayed as a badge.
-                                        // In `serviceTypes` constant, `categories` groups services into "Popular", "Interior", etc.
-                                        // Typically a Service has a BROAD category (like "Renovasi") or specific one.
-                                        // In `initialServices` example: name='Kebocoran', category='Perbaikan Umum'.
-                                        // If we use the grouped dropdown, we are selecting specific services?
-                                        // NO, the user request says: "buat kategori menjadi dropdown ... sesuaikan dengan ... ServiceGrid.tsx".
-                                        // ServiceGrid uses `categories` const.
-                                        // Let's allow selecting the GROUP TITLE as the category? Or the keys? or just list the group titles?
-
-                                        // RE-READ REQUEST: "warna kategori sesuaikan juga ... jenis layanannya juga di buat drop down"
-                                        // Wait, `formData.name` is the Service Name (which we already made a dropdown).
-                                        // `formData.category` is the broad Category (e.g. "Renovasi", "Interior").
-                                        // In `constants.ts`, `categories` object has titles like "🏠 Interior & Finishing".
-                                        // So I should let user pick one of these TITLES as the category.
-
-                                        return (
-                                            <option key={key} value={group.title}>{group.title}</option>
-                                        );
-                                    })}
+                                    {Object.entries(categories).map(([key, group]) => (
+                                        <option key={key} value={group.title}>{group.title}</option>
+                                    ))}
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                             </div>

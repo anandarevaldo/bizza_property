@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { Mail, Lock, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 
+import { useRouter } from 'next/navigation'; // Add import
+
 interface LoginFormProps {
     switchView: (view: any) => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
+    const router = useRouter(); // Initialize router
     const [isLogin, setIsLogin] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
@@ -17,15 +20,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
 
         // Restore Mock Logins for Admin/Mandor
         if (email === 'admin@bizza.com' && password === 'admin123') {
-            switchView('admin');
+            router.push('/Admin/Dashboard'); // Use router
             return;
         } else if (email === 'mandor@bizza.com' && password === 'mandor123') {
-            switchView('mandor');
+            router.push('/Mandor/Dashboard'); // Assuming Mandor also needs routing
             return;
         }
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             });
@@ -35,9 +38,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
                 return;
             }
 
-            // Successful login will trigger the onAuthStateChange in Navbar
-            // preventing the need for manual state passing if we just switch view
-            switchView('home');
+            // Check User Role & Redirect
+            if (data.user) {
+                const role = data.user.user_metadata?.role;
+
+                if (role === 'ADMIN') {
+                    router.push('/Admin/Dashboard');
+                } else if (role === 'MANDOR') {
+                    router.push('/Mandor/Dashboard');
+                } else {
+                    switchView('home');
+                }
+            }
 
         } catch (err) {
             console.error(err);

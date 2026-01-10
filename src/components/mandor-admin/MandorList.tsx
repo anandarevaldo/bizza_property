@@ -1,8 +1,9 @@
+'use client';
 
 import React, { useState } from 'react';
 import { Plus, Search, Edit2, Trash2, MapPin, Star, Phone, Hammer, ChevronRight, X, User, HardHat } from 'lucide-react';
 import { serviceTypes } from '../Layanan/RepairServiceSelection/constants';
-import { Mandor } from '../Admin/types';
+import { Mandor } from '../dashboard-admin/types';
 import { MandorEditModal } from './MandorEditModal';
 
 export const initialMandors: Mandor[] = [

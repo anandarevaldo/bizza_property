@@ -1,9 +1,10 @@
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { X, ChevronRight, CheckCircle2, User, Hammer, MapPin, Phone, StickyNote, Activity, ChevronDown, HardHat, Users, Star } from 'lucide-react';
-import { Mandor } from '../Admin/types';
+import { Mandor } from '../dashboard-admin/types';
 import { serviceTypes } from '../Layanan/RepairServiceSelection/constants';
-import { initialTeam, TeamMember } from '../Mandor/TeamManagement';
+import { initialTeam, TeamMember } from '../team-mandor/TeamList';
 
 interface MandorEditModalProps {
     isOpen: boolean;

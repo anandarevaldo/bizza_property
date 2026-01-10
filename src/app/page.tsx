@@ -9,8 +9,8 @@ import Footer from '../components/footer';
 
 import Login from './auth/Login/Login';
 import Register from './auth/Register/Register';
-import AdminDashboard from '../components/Admin/dashboard';
-import MandorDashboard from '../components/Mandor/MandorDashboard';
+// AdminDashboard removed - uses Routing
+// MandorDashboard removed - uses Routing
 // ServicePage removed
 import AboutUsPage from './User/AboutUs/aboutUs';
 import ChatBot from '../components/ChatBot';
@@ -68,6 +68,15 @@ export default function BizzaPropertyApp() {
   const [selectedMaterials, setSelectedMaterials] = useState<any[]>([]);
 
   const switchView = (view: 'home' | 'search' | 'login' | 'register' | 'admin' | 'mandor' | 'layanan' | 'portfolio' | 'portfolio-details' | 'about' | 'booking-form' | 'booking-form-business' | 'handyman-selection' | 'booking-form-handyman' | 'history' | 'service-repair-booking' | 'repair-service-selection' | 'material-selection') => {
+    // If Admin or Mandor is requested via switchView (fallback), redirect instead
+    if (view === 'admin') {
+      window.location.href = '/Admin/Dashboard';
+      return;
+    }
+    if (view === 'mandor') {
+      window.location.href = '/Mandor/Dashboard';
+      return;
+    }
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -95,15 +104,7 @@ export default function BizzaPropertyApp() {
         <Register switchView={switchView} />
       )}
 
-      {/* ================= VIEW: ADMIN ================= */}
-      {currentView === 'admin' && (
-        <AdminDashboard />
-      )}
 
-      {/* ================= VIEW: MANDOR ================= */}
-      {currentView === 'mandor' && (
-        <MandorDashboard />
-      )}
 
       {/* ================= VIEW: LAYANAN ================= */}
       {currentView === 'layanan' && (

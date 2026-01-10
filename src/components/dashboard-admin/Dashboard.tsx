@@ -1,3 +1,4 @@
+'use client';
 
 import React, { useState } from 'react';
 import Sidebar from './sidebar';
@@ -358,7 +359,11 @@ const DashboardAdmin = () => {
             <Sidebar
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
-                onLogout={() => alert("Logout Clicked")}
+                onLogout={async () => {
+                    const { supabase } = await import('../../lib/supabaseClient'); // Dynamic import to avoid cycles if any, or just consistent
+                    await supabase.auth.signOut();
+                    window.location.href = '/'; // Hard reload to clear client state
+                }}
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
             />

@@ -1,3 +1,4 @@
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Upload, Image as ImageIcon, Trash2, CheckCircle2, Save, Calendar, FolderOpen, AlignLeft, ChevronDown } from 'lucide-react';

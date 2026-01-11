@@ -13,18 +13,22 @@ export interface Schedule {
     time: string;
     address: string;
     mandor: string;
-    status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled' | 'Request Survey';
+    status: 'Need Validation' | 'On Progress' | 'Cancel' | 'Done';
 }
 
-export const initialSchedules: Schedule[] = [
-    { id: '1', customerName: 'Ibu Ratna', service: 'Perbaikan Kebocoran', date: '2025-12-28', time: '10:00', address: 'Jl. Merpati No. 12, Jakarta Selatan', mandor: 'Pak Budi Santoso', status: 'Confirmed' },
-    { id: '2', customerName: 'Bapak Hendra', service: 'Instalasi AC', date: '2025-12-28', time: '14:00', address: 'Cluster Harmoni Blok B2, Tangerang', mandor: 'Pak Slamet Riyadi', status: 'Pending' },
-    { id: '3', customerName: 'Cafe Kopi Kenangan', service: 'Pengecatan Interior', date: '2025-12-29', time: '09:00', address: 'Ruko Mall of Indonesia, Jakarta Utara', mandor: 'Tim Pak Joko', status: 'Confirmed' },
-    { id: '4', customerName: 'Bapak Budi', service: 'Renovasi Dapur', date: '2025-11-15', time: '08:00', address: 'Jl. Melati No. 5, Jakarta Barat', mandor: 'Tim Pak Asep', status: 'Completed' },
-];
+import { scheduleService } from '@/lib/services/scheduleService';
+
+
+// export const initialSchedules: Schedule[] = [
+//     { id: '1', customerName: 'Ibu Ratna', service: 'Perbaikan Kebocoran', date: '2025-12-28', time: '10:00', address: 'Jl. Merpati No. 12, Jakarta Selatan', mandor: 'Pak Budi Santoso', status: 'On Progress' },
+//     { id: '2', customerName: 'Bapak Hendra', service: 'Instalasi AC', date: '2025-12-28', time: '14:00', address: 'Cluster Harmoni Blok B2, Tangerang', mandor: 'Pak Slamet Riyadi', status: 'On Progress' },
+//     { id: '3', customerName: 'Cafe Kopi Kenangan', service: 'Pengecatan Interior', date: '2025-12-29', time: '09:00', address: 'Ruko Mall of Indonesia, Jakarta Utara', mandor: 'Tim Pak Joko', status: 'Done' },
+//     { id: '4', customerName: 'Bapak Budi', service: 'Renovasi Dapur', date: '2025-11-15', time: '08:00', address: 'Jl. Melati No. 5, Jakarta Barat', mandor: 'Tim Pak Asep', status: 'Done' },
+// ];
 
 export const MandorScheduleList: React.FC = () => {
-    const [schedules, setSchedules] = useState<Schedule[]>(initialSchedules);
+    const [schedules, setSchedules] = useState<Schedule[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [viewDate, setViewDate] = useState(new Date()); // State for the current month view
 
@@ -34,13 +38,31 @@ export const MandorScheduleList: React.FC = () => {
 
     const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(null);
 
+    // Fetch schedules for Mandor (ID 1 for demo)
+    React.useEffect(() => {
+        const fetchSchedules = async () => {
+            setIsLoading(true);
+            try {
+                // Simulate Mandor ID 1 (Pak Mandor Budi)
+                const data = await scheduleService.getByMandor(1);
+                // Cast to local Schedule type if needed, or ensure compatibility
+                setSchedules(data as any);
+            } catch (error) {
+                console.error('Error fetching schedules:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchSchedules();
+    }, [isEditModalOpen]); // Re-fetch when edit modal closes
+
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Confirmed': return 'bg-blue-600 text-white shadow-blue-200';
-            case 'Pending': return 'bg-yellow-500 text-white shadow-yellow-200';
-            case 'Completed': return 'bg-green-600 text-white shadow-green-200';
-            case 'Cancelled': return 'bg-red-500 text-white shadow-red-200';
-            case 'Request Survey': return 'bg-purple-600 text-white shadow-purple-200';
+            case 'On Progress': return 'bg-yellow-500 text-white shadow-yellow-200';
+            case 'Need Validation': return 'bg-blue-500 text-white shadow-blue-200';
+            case 'Cancel': return 'bg-red-500 text-white shadow-red-200';
+            case 'Done': return 'bg-green-600 text-white shadow-green-200';
             default: return 'bg-gray-500 text-white';
         }
     };
@@ -80,11 +102,11 @@ export const MandorScheduleList: React.FC = () => {
         const daySchedules = schedules.filter(s => s.date === dateString);
         if (daySchedules.length === 0) return null;
 
-        // Return status priority: Confirmed > Pending > Completed
-        if (daySchedules.some(s => s.status === 'Confirmed')) return 'bg-blue-600';
-        if (daySchedules.some(s => s.status === 'Request Survey')) return 'bg-purple-600';
-        if (daySchedules.some(s => s.status === 'Pending')) return 'bg-yellow-500';
-        if (daySchedules.some(s => s.status === 'Completed')) return 'bg-green-600';
+        // Return status priority: On Progress > Done
+        if (daySchedules.some(s => s.status === 'On Progress')) return 'bg-yellow-500';
+        if (daySchedules.some(s => s.status === 'Need Validation')) return 'bg-blue-500';
+        if (daySchedules.some(s => s.status === 'Done')) return 'bg-green-600';
+        if (daySchedules.some(s => s.status === 'Cancel')) return 'bg-red-500';
         return 'bg-gray-400';
     };
 
@@ -98,15 +120,18 @@ export const MandorScheduleList: React.FC = () => {
         setIsDetailModalOpen(true);
     };
 
-    const handleSaveSchedule = (scheduleData: Partial<Schedule>, isNew: boolean) => {
-        if (isNew) {
-            const newSchedule: Schedule = {
-                ...scheduleData as Schedule,
-                id: Math.random().toString(36).substr(2, 9),
-            };
-            setSchedules([...schedules, newSchedule]);
-        } else {
-            setSchedules(schedules.map(s => s.id === (scheduleData as Schedule).id ? { ...s, ...scheduleData } as Schedule : s));
+    const handleSaveSchedule = async (scheduleData: Partial<Schedule>, isNew: boolean) => {
+        try {
+            if (isNew) {
+                // Should not happen in Mandor view usually, but if enabled
+                await scheduleService.create(scheduleData as any);
+            } else {
+                await scheduleService.update((scheduleData as Schedule).id, scheduleData);
+            }
+            // Refresh logic handles the update via useEffect dependency or manual refresh
+            setIsEditModalOpen(false);
+        } catch (error) {
+            console.error('Error saving:', error);
         }
     };
 

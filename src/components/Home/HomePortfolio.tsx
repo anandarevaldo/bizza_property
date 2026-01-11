@@ -58,7 +58,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ activePortfolioCategory, setActiv
                         return (
                             <div
                                 key={project.id}
-                                onClick={() => router.push(`/User/portfolio/${project.id}`)}
+                                onClick={() => router.push(`/user/portfolio/${project.id}`)}
                                 className={`bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 text-left group cursor-pointer relative ${spanClasses}`}
                             >
                                 <img
@@ -91,7 +91,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ activePortfolioCategory, setActiv
                 {/* View All Button */}
                 <div className="text-center">
                     <button
-                        onClick={() => router.push('/User/portfolio')}
+                        onClick={() => router.push('/user/portfolio')}
                         className="px-8 py-3 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] rounded-full font-bold hover:bg-[#1e3a8a] hover:text-white transition-all shadow-md hover:shadow-xl flex items-center gap-2 mx-auto"
                     >
                         Lihat Seluruh Portfolio <ArrowRight className="w-4 h-4" />

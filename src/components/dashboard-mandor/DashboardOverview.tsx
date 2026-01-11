@@ -157,7 +157,7 @@ const DashboardOverview = ({ }: DashboardOverviewProps) => {
                         )}
                     </div>
                     <Link
-                        href="/Mandor/Order"
+                        href="/mandor/order"
                         className="mt-6 w-full py-3 bg-gray-50 text-gray-500 rounded-2xl font-bold text-sm hover:bg-gray-100 hover:text-gray-900 transition-colors flex items-center justify-center gap-2"
                     >
                         Lihat Semua Proyek <ChevronRight className="w-4 h-4" />

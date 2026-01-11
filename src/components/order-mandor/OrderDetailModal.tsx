@@ -9,7 +9,7 @@ export interface Order {
     type: 'Jasa Tukang' | 'Borongan' | 'Material';
     total: string;
     date: string;
-    status: 'Menunggu' | 'Dikerjakan' | 'Selesai' | 'Batal' | 'Request Survey';
+    status: 'Need Validation' | 'On Progress' | 'Done' | 'Cancel';
     userBudget?: string;
     rabProposed?: number;
     rabStatus?: 'Pending' | 'Approved' | 'Rejected';
@@ -156,7 +156,7 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
             assignedHandymanId: selectedHandymanId,
             handymanName: selectedHandyman?.name || order.handymanName,
             handymanRole: selectedHandyman?.role || order.handymanRole,
-            status: (order.status === 'Menunggu' && selectedHandymanId) ? 'Dikerjakan' : order.status
+            status: (order.status === 'Need Validation' && selectedHandymanId) ? 'On Progress' : order.status
         };
 
         if (onSave) onSave(updatedOrder);
@@ -213,8 +213,8 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
     };
 
     const isProgressLocked = order.progress === 100;
-    const isPending = order.status === 'Menunggu' || order.status === 'Batal';
-    const isWorking = order.status === 'Dikerjakan' || order.status === 'Selesai';
+    const isPending = order.status === 'Need Validation' || order.status === 'Cancel';
+    const isWorking = order.status === 'On Progress' || order.status === 'Done';
 
     // Derived state for display
     const selectedHandymanObj = availableHandymen.find(h => h.id === selectedHandymanId);
@@ -238,11 +238,11 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
                             <div className="flex items-center gap-3">
                                 <h2 className="text-xl font-black text-gray-900 line-clamp-1">{order.project || order.customer}</h2>
                                 <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border 
-                                    ${order.status === 'Dikerjakan' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                        order.status === 'Selesai' ? 'bg-green-50 text-green-600 border-green-100' :
-                                            order.status === 'Request Survey' ? 'bg-purple-50 text-purple-600 border-purple-100' :
-                                                'bg-yellow-50 text-yellow-600 border-yellow-100'}`}>
-                                    {order.status === 'Dikerjakan' ? 'On Progress' : order.status}
+                                    ${order.status === 'On Progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                        order.status === 'Done' ? 'bg-green-50 text-green-600 border-green-100' :
+                                            order.status === 'Need Validation' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                                                'bg-red-50 text-red-600 border-red-100'}`}>
+                                    {order.status === 'On Progress' ? 'On Progress' : order.status}
                                 </span>
                             </div>
                             <p className="text-gray-400 text-sm font-bold flex items-center gap-2 mt-0.5">
@@ -476,8 +476,8 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
                                         </p>
                                     </div>
 
-                                    {/* RAB Proposal Section (Only for Request Survey) */}
-                                    {order.status === 'Request Survey' && (
+                                    {/* RAB Proposal Section (Only for Need Validation) */}
+                                    {order.status === 'Need Validation' && (
                                         <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm relative overflow-hidden">
                                             <div className="absolute top-0 right-0 p-8 opacity-5">
                                                 <FileText className="w-32 h-32 rotate-12" />

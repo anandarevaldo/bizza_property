@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, ChevronRight, CheckCircle2, Hammer, Calendar, DollarSign, AlignLeft, ChevronDown } from 'lucide-react';
+import { X, ChevronRight, CheckCircle2, Hammer, Calendar, DollarSign, AlignLeft, ChevronDown, Loader2 } from 'lucide-react';
 import { Jasa } from './JasaList';
 import { useServices } from '@/hooks/useServices';
 import { CATEGORY_DISPLAY } from '@/lib/constants/serviceTemplates';
@@ -10,9 +10,10 @@ interface JasaEditModalProps {
     onClose: () => void;
     jasa: Jasa | null;
     onSave: (data: Partial<Jasa>) => void;
+    isSaving?: boolean;
 }
 
-export const JasaEditModal: React.FC<JasaEditModalProps> = ({ isOpen, onClose, jasa, onSave }) => {
+export const JasaEditModal: React.FC<JasaEditModalProps> = ({ isOpen, onClose, jasa, onSave, isSaving = false }) => {
     const [formData, setFormData] = useState<Partial<Jasa>>({});
     const { services } = useServices();
 
@@ -162,9 +163,22 @@ export const JasaEditModal: React.FC<JasaEditModalProps> = ({ isOpen, onClose, j
                         </label>
                     </div>
 
-                    <button type="submit" className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 hover:shadow-2xl hover:-translate-y-1 flex items-center justify-center gap-3">
-                        <CheckCircle2 className="w-6 h-6" />
-                        Simpan Data
+                    <button
+                        type="submit"
+                        disabled={isSaving}
+                        className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 hover:shadow-2xl hover:-translate-y-1 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                    >
+                        {isSaving ? (
+                            <>
+                                <Loader2 className="w-6 h-6 animate-spin" />
+                                Menyimpan...
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle2 className="w-6 h-6" />
+                                Simpan Data
+                            </>
+                        )}
                     </button>
                 </form>
             </div>

@@ -1,6 +1,5 @@
 'use client';
 
-'use client';
 
 import React, { useState } from 'react';
 import { Search, FileText, ChevronDown, CheckCircle, Clock, XCircle, Eye, X, RefreshCcw } from 'lucide-react';
@@ -15,14 +14,14 @@ export interface Order {
     type: 'Material' | 'Layanan' | 'Jasa';
     total: string;
     date: string;
-    status: 'Paid' | 'Unpaid' | 'Process' | 'Cancelled';
+    status: 'Paid' | 'Unpaid' | 'Process' | 'Cancelled' | 'Need Validation' | 'On Progress' | 'Done' | 'Cancel';
 }
 
-// export const initialOrders: Order[] = [
-//     { id: '1', orderNumber: 'ORD-2025-001', customer: 'Bapak Santoso', type: 'Layanan', total: 'Rp 450.000', date: '2025-12-28', status: 'Paid' },
-//     { id: '2', orderNumber: 'ORD-2025-002', customer: 'Ibu Linda', type: 'Material', total: 'Rp 1.250.000', date: '2025-12-28', status: 'Process' },
-//     { id: '3', orderNumber: 'ORD-2025-003', customer: 'Cafe Kopi Kita', type: 'Jasa', total: 'Rp 3.000.000', date: '2025-12-27', status: 'Unpaid' },
-// ];
+export const initialOrders: Order[] = [
+    { id: '1', orderNumber: 'ORD-2025-001', customer: 'Bapak Santoso', type: 'Layanan', total: 'Rp 450.000', date: '2025-12-28', status: 'Done' },
+    { id: '2', orderNumber: 'ORD-2025-002', customer: 'Ibu Linda', type: 'Material', total: 'Rp 1.250.000', date: '2025-12-28', status: 'On Progress' },
+    { id: '3', orderNumber: 'ORD-2025-003', customer: 'Cafe Kopi Kita', type: 'Jasa', total: 'Rp 3.000.000', date: '2025-12-27', status: 'Need Validation' },
+];
 
 export const OrderList: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -43,9 +42,10 @@ export const OrderList: React.FC = () => {
                 type: (o.tipe_pesanan === 'Rumah' || o.tipe_pesanan === 'Bisnis' || o.tipe_pesanan === 'Tukang') ? 'Jasa' : 'Layanan',
                 total: o.budget || 'Rp 0',
                 date: new Date(o.tanggal_pesan).toLocaleDateString('id-ID'),
-                status: o.status_pesanan === 'ON_PROGRESS' ? 'Process' : 
-                        o.status_pesanan === 'COMPLETED' ? 'Paid' : 
-                         o.status_pesanan === 'CANCELLED' ? 'Cancelled' : 'Unpaid'
+                status: o.status_pesanan === 'ON_PROGRESS' ? 'On Progress' :
+                    o.status_pesanan === 'DONE' ? 'Done' :
+                        o.status_pesanan === 'CANCEL' ? 'Cancel' :
+                            o.status_pesanan === 'NEED_VALIDATION' ? 'Need Validation' : 'Need Validation'
             }));
             setOrders(formattedOrders);
         } catch (error) {
@@ -76,10 +76,10 @@ export const OrderList: React.FC = () => {
 
     const getStatusStyle = (status: string) => {
         switch (status) {
-            case 'Paid': return { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', icon: CheckCircle };
-            case 'Process': return { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100', icon: Clock };
-            case 'Unpaid': return { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', icon: Clock };
-            case 'Cancelled': return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100', icon: XCircle };
+            case 'Done': return { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', icon: CheckCircle };
+            case 'On Progress': return { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100', icon: Clock };
+            case 'Need Validation': return { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', icon: Clock };
+            case 'Cancel': return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100', icon: XCircle };
             default: return { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-100', icon: Clock };
         }
     };
@@ -100,7 +100,7 @@ export const OrderList: React.FC = () => {
 
                 {/* Stats Mini Cards */}
                 <div className="flex gap-4 items-center">
-                    <button 
+                    <button
                         onClick={fetchOrders}
                         className="p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl text-gray-400 transition-colors"
                         title="Refresh Data"
@@ -109,11 +109,11 @@ export const OrderList: React.FC = () => {
                     </button>
                     <div className="px-5 py-3 bg-emerald-50 rounded-2xl border border-emerald-100">
                         <p className="text-xs font-bold text-emerald-600 uppercase mb-1">Paid Orders</p>
-                        <p className="text-2xl font-black text-emerald-700">{orders.filter(o => o.status === 'Paid').length}</p>
+                        <p className="text-2xl font-black text-emerald-700">{orders.filter(o => o.status === 'Done').length}</p>
                     </div>
                     <div className="px-5 py-3 bg-blue-50 rounded-2xl border border-blue-100">
                         <p className="text-xs font-bold text-blue-600 uppercase mb-1">On Process</p>
-                        <p className="text-2xl font-black text-blue-700">{orders.filter(o => o.status === 'Process').length}</p>
+                        <p className="text-2xl font-black text-blue-700">{orders.filter(o => o.status === 'On Progress').length}</p>
                     </div>
                 </div>
             </div>
@@ -186,10 +186,10 @@ export const OrderList: React.FC = () => {
                                                     onChange={(e) => handleStatusChange(order.id, e.target.value as Order['status'])}
                                                     className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none z-10`}
                                                 >
-                                                    <option value="Paid">Paid</option>
-                                                    <option value="Unpaid">Unpaid</option>
-                                                    <option value="Process">Process</option>
-                                                    <option value="Cancelled">Cancelled</option>
+                                                    <option value="Need Validation">Need Validation</option>
+                                                    <option value="On Progress">On Progress</option>
+                                                    <option value="Done">Done</option>
+                                                    <option value="Cancel">Cancel</option>
                                                 </select>
                                                 <span>{order.status}</span>
                                                 <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-50" />

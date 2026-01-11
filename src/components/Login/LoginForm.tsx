@@ -24,10 +24,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
 
         // Restore Mock Logins for Admin/Mandor
         if (email === 'admin@bizza.com' && password === 'admin123') {
-            router.push('/Admin/Dashboard');
+            router.push('/admin/dashboard');
             return;
         } else if (email === 'mandor@bizza.com' && password === 'mandor123') {
-            router.push('/Mandor/Dashboard');
+            router.push('/mandor/dashboard');
             return;
         }
 
@@ -47,9 +47,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
                 const role = data.user.user_metadata?.role;
 
                 if (role === 'ADMIN') {
-                    router.push('/Admin/Dashboard');
+                    router.push('/admin/dashboard');
                 } else if (role === 'MANDOR') {
-                    router.push('/Mandor/Dashboard');
+                    router.push('/mandor/dashboard');
                 } else {
                     router.push('/');
                 }

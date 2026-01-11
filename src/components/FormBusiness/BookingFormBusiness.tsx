@@ -85,7 +85,8 @@ const BookingFormBusiness: React.FC<BookingFormBusinessProps> = ({ switchView })
                 budget,
                 selectedDate: selectedDate ? selectedDate.toISOString() : new Date().toISOString(),
                 selectedTime: selectedTime || '',
-                paymentMethod: 'QRIS'
+                paymentMethod: 'QRIS',
+                kategori_layanan: 'Borongan'
             });
 
             if (!order) throw new Error('Gagal membuat pesanan.');

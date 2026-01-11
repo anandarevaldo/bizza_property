@@ -119,7 +119,8 @@ const BookingFormHandyman: React.FC<BookingFormHandymanProps> = ({ switchView, s
                 budget: finalTotal.toString(),
                 selectedDate: selectedDate?.toISOString() || new Date().toISOString(),
                 selectedTime: selectedTimeSlot || '',
-                paymentMethod: 'QRIS'
+                paymentMethod: 'QRIS',
+                kategori_layanan: 'Jasa Tukang'
             });
 
             if (order) {

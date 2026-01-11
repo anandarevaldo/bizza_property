@@ -280,7 +280,7 @@ const AboutUsPage: React.FC<AboutUsPageProps> = () => { // switchView removed fr
                                 ))}
                             </div>
                             <button
-                                onClick={() => router.push('/User/layanan')}
+                                onClick={() => router.push('/user/layanan')}
                                 className="mt-8 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-bold shadow-lg transition-all transform hover:scale-105"
                             >
                                 Lihat Layanan Kami
@@ -306,13 +306,13 @@ const AboutUsPage: React.FC<AboutUsPageProps> = () => { // switchView removed fr
                     <p className="text-blue-200 mb-8 max-w-2xl mx-auto">Hubungi kami sekarang dan konsultasikan kebutuhan properti Anda dengan tim ahli kami.</p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button
-                            onClick={() => router.push('/User/layanan')}
+                            onClick={() => router.push('/user/layanan')}
                             className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-8 py-4 rounded-full font-bold shadow-lg transition-all transform hover:scale-105"
                         >
                             Jelajahi Layanan
                         </button>
                         <button
-                            onClick={() => router.push('/User/portfolio')}
+                            onClick={() => router.push('/user/portfolio')}
                             className="bg-white/10 hover:bg-white/20 text-white border border-white/30 px-8 py-4 rounded-full font-bold transition-all"
                         >
                             Lihat Portfolio

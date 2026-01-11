@@ -1,6 +1,6 @@
 
 import React from 'react';
-import KategoriLayanan from '@/app/User/KategoriLayanan/KategoriLayanan';
+import KategoriLayanan from '@/app/user/kategorilayanan/KategoriLayanan';
 import Navbar from '@/components/navbar';
 
 import { getServices } from '@/lib/services/layananService';
@@ -9,7 +9,7 @@ import { getServices } from '@/lib/services/layananService';
 // In a real refactor, we would move KategoriLayanan logic here directly
 export default async function LayananPage() {
     const services = await getServices();
-    
+
     return (
         // We render KategoriLayanan which renders Navbar itself. 
         // We pass a dummy switchView because KategoriLayanan expects it.

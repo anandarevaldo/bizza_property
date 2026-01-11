@@ -13,10 +13,10 @@ const MandorSidebar: React.FC<MandorSidebarProps> = ({ onLogout, isOpen, onClose
     const pathname = usePathname();
 
     const menuItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid, href: '/Mandor/Dashboard' },
-        { id: 'jadwal', label: 'Jadwal & Detail', icon: Calendar, href: '/Mandor/Jadwal' },
-        { id: 'order', label: 'Pemesanan / Order', icon: ShoppingBag, href: '/Mandor/Order' },
-        { id: 'team', label: 'Tim Saya', icon: Users, href: '/Mandor/Team' },
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid, href: '/mandor/dashboard' },
+        { id: 'jadwal', label: 'Jadwal & Detail', icon: Calendar, href: '/mandor/jadwal' },
+        { id: 'order', label: 'Pemesanan / Order', icon: ShoppingBag, href: '/mandor/order' },
+        { id: 'team', label: 'Tim Saya', icon: Users, href: '/mandor/team' },
     ];
 
     return (

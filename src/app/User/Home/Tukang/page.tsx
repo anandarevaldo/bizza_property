@@ -17,7 +17,7 @@ export default function TukangSelectionPage() {
     const [searchTerm, setSearchTerm] = useState('');
 
     const handleSelect = (name: string) => {
-        router.push(`/User/Form/FormTukang?type=${encodeURIComponent(name)}`);
+        router.push(`/user/form/formtukang?type=${encodeURIComponent(name)}`);
     };
 
     // Filter Logic for Search Results

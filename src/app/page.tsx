@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Home from './User/Home/Home';
+import Home from './user/home/Home';
 import { Project } from '@/components/Portfolio/PortfolioGrid';
 import { getProjects } from '@/lib/actions/portfolio';
 
@@ -27,9 +27,9 @@ export default function BizzaPropertyApp() {
   // Home renders Navbar which now handles routing via Link so switchView is mostly unused for page navigation
   // but might be used for internal scrolling if logic exists.
   return (
-    <Home 
-        onProjectClick={() => {}} 
-        projects={portfolioProjects} 
+    <Home
+      onProjectClick={() => { }}
+      projects={portfolioProjects}
     />
   );
 }

@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock, MapPin, User, HardHat, CheckCircle2, X, ChevronDown } from 'lucide-react';
-import { initialMandors } from '../mandor-admin/MandorList';
+import { Calendar as CalendarIcon, Clock, MapPin, User, HardHat, CheckCircle2, X, ChevronDown, Loader2 } from 'lucide-react';
+// import { initialMandors } from '../mandor-admin/MandorList';
 import { Mandor } from '../dashboard-admin/types';
 import { useServices } from '@/hooks/useServices';
+import { mandorService } from '@/lib/services/mandorService';
 
 interface Schedule {
     id: string;
@@ -14,7 +15,8 @@ interface Schedule {
     time: string;
     address: string;
     mandor: string;
-    status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled' | 'Request Survey';
+    mandorId?: number;
+    status: 'Need Validation' | 'On Progress' | 'Cancel' | 'Done';
 }
 
 interface ScheduleEditModalProps {
@@ -23,26 +25,41 @@ interface ScheduleEditModalProps {
     schedule: Schedule | null;
     selectedDate: string;
     onSave: (scheduleData: Partial<Schedule>, isNew: boolean) => void;
+    isSaving?: boolean;
 }
 
-export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, onClose, schedule, selectedDate, onSave }) => {
+export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, onClose, schedule, selectedDate, onSave, isSaving = false }) => {
     const [formData, setFormData] = useState<Partial<Schedule>>({});
     const { services: dbServices } = useServices();
+    const [availableMandors, setAvailableMandors] = useState<Mandor[]>([]);
+
+    useEffect(() => {
+        const fetchMandors = async () => {
+            try {
+                const data = await mandorService.getAll();
+                setAvailableMandors(data);
+            } catch (error) {
+                console.error('Error fetching mandors:', error);
+            }
+        };
+        fetchMandors();
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
             if (schedule) {
                 setFormData(schedule);
             } else {
-                setFormData({ date: selectedDate, status: 'Pending' });
+                setFormData({ date: selectedDate, status: 'Need Validation' });
             }
         }
     }, [isOpen, schedule, selectedDate]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSaving) return; // Prevent double submit
         onSave(formData, !schedule);
-        onClose();
+        // Note: Modal close is handled by parent after successful save
     };
 
     if (!isOpen) return null;
@@ -99,15 +116,15 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                         <div className="mt-4">
                             <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Status</label>
                             <div className="grid grid-cols-2 gap-2">
-                                {['Pending', 'Confirmed', 'Completed', 'Cancelled'].map((status) => (
+                                {['Need Validation', 'On Progress', 'Done', 'Cancel'].map((status) => (
                                     <button
                                         key={status}
                                         type="button"
                                         onClick={() => setFormData({ ...formData, status: status as any })}
                                         className={`px-2 py-2 rounded-lg text-xs font-bold border transition-all ${formData.status === status
-                                            ? status === 'Confirmed' ? 'bg-blue-50 border-blue-500 text-blue-700' :
-                                                status === 'Pending' ? 'bg-yellow-50 border-yellow-500 text-yellow-700' :
-                                                    status === 'Completed' ? 'bg-green-50 border-green-500 text-green-700' :
+                                            ? status === 'On Progress' ? 'bg-blue-50 border-blue-500 text-blue-700' :
+                                                status === 'Done' ? 'bg-green-50 border-green-500 text-green-700' :
+                                                    status === 'Need Validation' ? 'bg-yellow-50 border-yellow-500 text-yellow-700' :
                                                         'bg-red-50 border-red-500 text-red-700'
                                             : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'
                                             }`}
@@ -181,14 +198,22 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Mandor (Penanggung Jawab)</label>
                                 <div className="relative">
                                     <select
-                                        value={formData.mandor || ''}
-                                        onChange={e => setFormData({ ...formData, mandor: e.target.value })}
+                                        value={formData.mandorId || ''}
+                                        onChange={e => {
+                                            const selectedId = parseInt(e.target.value);
+                                            const selectedMandor = availableMandors.find(m => parseInt(m.id) === selectedId);
+                                            setFormData({
+                                                ...formData,
+                                                mandorId: selectedId,
+                                                mandor: selectedMandor ? selectedMandor.name : ''
+                                            });
+                                        }}
                                         className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all font-medium text-sm appearance-none bg-white"
                                         required
                                     >
                                         <option value="" disabled>Pilih Mandor</option>
-                                        {initialMandors.map((mandor: Mandor) => (
-                                            <option key={mandor.id} value={mandor.name}>
+                                        {availableMandors.map((mandor: Mandor) => (
+                                            <option key={mandor.id} value={mandor.id}>
                                                 {mandor.name}
                                             </option>
                                         ))}
@@ -210,10 +235,20 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-200 hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                            disabled={isSaving}
+                            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-200 hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                         >
-                            <CheckCircle2 className="w-4 h-4" />
-                            Simpan
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Menyimpan...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    Simpan
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>

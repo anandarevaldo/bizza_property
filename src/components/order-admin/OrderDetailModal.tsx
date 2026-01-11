@@ -10,7 +10,7 @@ interface Order {
     type: 'Jasa Tukang' | 'Borongan' | 'Material' | 'Layanan' | 'Jasa';
     total: string;
     date: string;
-    status: 'Paid' | 'Unpaid' | 'Process' | 'Cancelled';
+    status: 'Paid' | 'Unpaid' | 'Process' | 'Cancelled' | 'Need Validation' | 'On Progress' | 'Done' | 'Cancel';
 }
 
 interface OrderDetailModalProps {
@@ -24,6 +24,11 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onCl
 
     const getStatusStyle = (status: string) => {
         switch (status) {
+            case 'Done': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+            case 'On Progress': return 'bg-blue-50 text-blue-600 border-blue-100';
+            case 'Need Validation': return 'bg-amber-50 text-amber-600 border-amber-100';
+            case 'Cancel': return 'bg-red-50 text-red-600 border-red-100';
+            // Legacy fallbacks
             case 'Paid': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
             case 'Process': return 'bg-blue-50 text-blue-600 border-blue-100';
             case 'Unpaid': return 'bg-amber-50 text-amber-600 border-amber-100';
@@ -90,17 +95,17 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onCl
                         </h3>
                         <div className="relative pl-8 border-l-2 border-gray-100 space-y-8">
                             <div className="relative">
-                                <div className={`absolute -left-[39px] w-5 h-5 rounded-full border-4 border-white shadow-sm ${order.status !== 'Unpaid' ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+                                <div className={`absolute -left-[39px] w-5 h-5 rounded-full border-4 border-white shadow-sm ${order.status !== 'Unpaid' && order.status !== 'Need Validation' ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
                                 <p className="font-bold text-gray-900">Pesanan Dibuat</p>
                                 <p className="text-sm text-gray-500">{order.date}</p>
                             </div>
                             <div className="relative">
-                                <div className={`absolute -left-[39px] w-5 h-5 rounded-full border-4 border-white shadow-sm ${order.status === 'Paid' || order.status === 'Process' ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+                                <div className={`absolute -left-[39px] w-5 h-5 rounded-full border-4 border-white shadow-sm ${order.status === 'Done' || order.status === 'On Progress' || order.status === 'Paid' || order.status === 'Process' ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
                                 <p className="font-bold text-gray-900">Pembayaran Terkonfirmasi</p>
                                 <p className="text-sm text-gray-500">Menunggu konfirmasi</p>
                             </div>
                             <div className="relative">
-                                <div className={`absolute -left-[39px] w-5 h-5 rounded-full border-4 border-white shadow-sm ${order.status === 'Process' ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+                                <div className={`absolute -left-[39px] w-5 h-5 rounded-full border-4 border-white shadow-sm ${order.status === 'On Progress' || order.status === 'Process' ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
                                 <p className="font-bold text-gray-900">Sedang Diproses</p>
                                 <p className="text-sm text-gray-500">Layanan sedang dikerjakan</p>
                             </div>

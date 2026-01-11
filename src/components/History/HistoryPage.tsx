@@ -322,7 +322,7 @@ const HistoryPage: React.FC<HistoryPageProps> = () => {
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">Belum ada pesanan</h3>
                             <p className="text-gray-500 mb-6 font-medium">Yuk, mulai pesan jasa pertamamu sekarang!</p>
-                            <button onClick={() => router.push('/User/layanan')} className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-blue-700 transition-colors">
+                            <button onClick={() => router.push('/user/layanan')} className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-blue-700 transition-colors">
                             Pesan Jasa
                         </button>
                         </div>

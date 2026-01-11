@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Menu, Search, Filter, Monitor, ArrowUpRight, TrendingUp, Users, DollarSign, Calendar, Star, MoreVertical, Briefcase, FileText, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { initialMandors } from '../mandor-admin/MandorList';
 import { initialOrders } from '../order-admin/OrderList';
-import { initialSchedules } from '../schedule-admin/ScheduleList';
+import { Schedule } from '../schedule-admin/ScheduleList';
 import { ScheduleDetailModal } from '../schedule-admin/ScheduleDetailModal';
 import { OrderDetailModal } from '../order-admin/OrderDetailModal';
 import Link from 'next/link';
@@ -72,7 +72,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = () => {
                             </h3>
                             <p className="text-gray-500 font-bold text-sm mt-2 ml-1">Transaksi yang masuk hari ini.</p>
                         </div>
-                        <Link href="/Admin/Order" className="px-5 py-2.5 bg-gray-50 text-gray-600 rounded-xl font-bold text-xs hover:bg-gray-100 hover:text-gray-900 transition-colors flex items-center gap-2">
+                        <Link href="/admin/order" className="px-5 py-2.5 bg-gray-50 text-gray-600 rounded-xl font-bold text-xs hover:bg-gray-100 hover:text-gray-900 transition-colors flex items-center gap-2">
                             Lihat Semua <ArrowUpRight className="w-4 h-4" />
                         </Link>
                     </div>
@@ -120,24 +120,24 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = () => {
                     </div>
 
                     <div className="space-y-4 relative z-10">
-                         {initialMandors.slice(0, 4).map((mandor, i) => (
-                             <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 group hover:bg-white hover:shadow-lg transition-all duration-300">
-                                 <div className="relative">
-                                     <div className="w-10 h-10 bg-gray-200 rounded-xl bg-cover bg-center" style={{ backgroundImage: `url(https://i.pravatar.cc/150?u=${mandor.name})` }}></div>
-                                     <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white
+                        {initialMandors.slice(0, 4).map((mandor, i) => (
+                            <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 group hover:bg-white hover:shadow-lg transition-all duration-300">
+                                <div className="relative">
+                                    <div className="w-10 h-10 bg-gray-200 rounded-xl bg-cover bg-center" style={{ backgroundImage: `url(https://i.pravatar.cc/150?u=${mandor.name})` }}></div>
+                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white
                                          ${mandor.status === 'Available' ? 'bg-green-500' :
-                                           mandor.status === 'Busy' ? 'bg-red-500' : 'bg-gray-400'}
+                                            mandor.status === 'Busy' ? 'bg-red-500' : 'bg-gray-400'}
                                      `}></div>
-                                 </div>
-                                 <div className="flex-1 min-w-0">
-                                     <h4 className="font-bold text-gray-900 text-sm truncate">{mandor.name}</h4>
-                                     <p className="text-xs text-gray-400 truncate">{mandor.specialty}</p>
-                                 </div>
-                             </div>
-                         ))}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-bold text-gray-900 text-sm truncate">{mandor.name}</h4>
+                                    <p className="text-xs text-gray-400 truncate">{mandor.specialty}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
 
-                    <Link href="/Admin/Mandor" className="mt-6 w-full py-3 bg-gray-50 text-gray-500 rounded-2xl font-bold text-sm hover:bg-gray-100 hover:text-gray-900 transition-colors flex items-center justify-center gap-2">
+                    <Link href="/admin/mandor" className="mt-6 w-full py-3 bg-gray-50 text-gray-500 rounded-2xl font-bold text-sm hover:bg-gray-100 hover:text-gray-900 transition-colors flex items-center justify-center gap-2">
                         Kelola Semua Tim <ArrowUpRight className="w-4 h-4" />
                     </Link>
                 </div>

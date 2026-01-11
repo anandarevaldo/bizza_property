@@ -34,7 +34,7 @@ const Layanan: React.FC<LayananProps> = ({ services }) => {
     });
 
     const handleSelect = (name: string) => {
-        router.push(`/User/Form/FormLayanan?type=${encodeURIComponent(name)}`);
+        router.push(`/user/form/formlayanan?type=${encodeURIComponent(name)}`);
     };
 
     return (

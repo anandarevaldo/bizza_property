@@ -15,13 +15,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onLogout, isOpen, onClose }) => {
     const pathname = usePathname();
 
     const menuItems = [
-        { href: '/Admin/Dashboard', label: 'Dashboard', icon: LayoutGrid },
-        { href: '/Admin/Layanan', label: 'Daftar Layanan', icon: Briefcase },
-        { href: '/Admin/Jasa', label: 'Daftar Jasa', icon: HardHat },
-        { href: '/Admin/Mandor', label: 'Data Mandor', icon: Users },
-        { href: '/Admin/Schedule', label: 'Jadwal & Detail', icon: Calendar },
-        { href: '/Admin/Portofolio', label: 'Portofolio', icon: Image },
-        { href: '/Admin/Order', label: 'Pemesanan / Order', icon: FileText },
+        { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutGrid },
+        { href: '/admin/layanan', label: 'Daftar Layanan', icon: Briefcase },
+        { href: '/admin/jasa', label: 'Daftar Jasa', icon: HardHat },
+        { href: '/admin/mandor', label: 'Data Mandor', icon: Users },
+        { href: '/admin/schedule', label: 'Jadwal & Detail', icon: Calendar },
+        { href: '/admin/portofolio', label: 'Portofolio', icon: Image },
+        { href: '/admin/order', label: 'Pemesanan / Order', icon: FileText },
     ];
 
     return (

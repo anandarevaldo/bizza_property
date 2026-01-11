@@ -83,10 +83,10 @@ const Navbar: React.FC<NavbarProps> = ({ switchView, variant = 'transparent' }) 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-8 text-sm font-medium">
                 <Link href="/" className={isActive('/')}>Beranda</Link>
-                <Link href="/User/layanan" className={isActive('/User/layanan')}>Layanan</Link>
-                <Link href="/User/portfolio" className={isActive('/User/portfolio')}>Portfolio</Link>
+                <Link href="/user/layanan" className={isActive('/user/layanan')}>Layanan</Link>
+                <Link href="/user/portfolio" className={isActive('/user/portfolio')}>Portfolio</Link>
                 <Link href="/about" className={isActive('/about')}>Tentang Kami</Link>
-                <Link href="/User/history" className={isActive('/User/history')}>Riwayat</Link>
+                <Link href="/user/history" className={isActive('/user/history')}>Riwayat</Link>
 
                 <div className="flex items-center space-x-4 pl-4 border-l border-white/20">
                     {user ? (

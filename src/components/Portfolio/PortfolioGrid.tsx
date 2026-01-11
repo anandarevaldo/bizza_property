@@ -54,7 +54,7 @@ const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectClick, projects 
                     {filteredProjects.map((project) => (
                         <Link
                             key={project.id}
-                            href={`/portfolio/${project.id}`}
+                            href={`/user/portfolio/${project.id}`}
                             className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 h-[400px] cursor-pointer bg-gray-900 border border-gray-100"
                         >
                             {/* Background Image */}

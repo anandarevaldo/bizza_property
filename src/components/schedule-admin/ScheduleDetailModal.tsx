@@ -11,7 +11,7 @@ interface Schedule {
     time: string;
     address: string;
     mandor: string;
-    status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled' | 'Request Survey';
+    status: 'Need Validation' | 'On Progress' | 'Cancel' | 'Done';
 }
 
 interface ScheduleDetailModalProps {
@@ -45,9 +45,9 @@ export const ScheduleDetailModal: React.FC<ScheduleDetailModalProps> = ({ isOpen
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <h2 className="text-xl font-black text-gray-900">Detail Jadwal</h2>
-                            <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${schedule.status === 'Confirmed' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                schedule.status === 'Pending' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
-                                    schedule.status === 'Completed' ? 'bg-green-50 text-green-600 border-green-100' :
+                            <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${schedule.status === 'On Progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                schedule.status === 'Done' ? 'bg-green-50 text-green-600 border-green-100' :
+                                    schedule.status === 'Need Validation' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
                                         'bg-red-50 text-red-600 border-red-100'
                                 }`}>
                                 {schedule.status}

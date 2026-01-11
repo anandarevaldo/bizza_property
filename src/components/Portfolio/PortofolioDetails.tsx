@@ -188,7 +188,7 @@ const PortofolioDetails: React.FC<ComponentProps> = ({ switchView, project, onPr
 
                         <div className="mt-8 flex justify-center">
                             <Link
-                                href="/User/layanan"
+                                href="/user/layanan"
                                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-all flex items-center gap-2 group"
                             >
                                 <span>Lihat Layanan Kami</span>
@@ -208,7 +208,7 @@ const PortofolioDetails: React.FC<ComponentProps> = ({ switchView, project, onPr
                             <h2 className="text-3xl font-bold text-slate-900 mt-2">Proyek Serupa</h2>
                         </div>
                         <Link
-                            href="/User/portfolio"
+                            href="/user/portfolio"
                             className="hidden md:flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold transition-colors"
                         >
                             Lihat Semua <ArrowRight className="w-4 h-4" />
@@ -219,7 +219,7 @@ const PortofolioDetails: React.FC<ComponentProps> = ({ switchView, project, onPr
                         {projects.filter(p => p.id !== project.id).slice(0, 3).map((relatedProject) => (
                             <Link
                                 key={relatedProject.id}
-                                href={`/User/portfolio/${relatedProject.id}`}
+                                href={`/user/portfolio/${relatedProject.id}`}
                                 className="group cursor-pointer"
                             >
                                 <div className="rounded-2xl overflow-hidden h-64 mb-4 relative shadow-md">

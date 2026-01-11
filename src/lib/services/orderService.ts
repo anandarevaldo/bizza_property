@@ -12,6 +12,8 @@ export interface CreateOrderParams {
     selectedDate: string;
     selectedTime: string;
     paymentMethod: string;
+    kategori_layanan?: 'Borongan' | 'Jasa Tukang';
+    // status is set automatically to NEED_VALIDATION or ON_PROGRESS depending on logic
 }
 
 export const orderService = {
@@ -28,9 +30,10 @@ export const orderService = {
                 budget: data.budget,
                 jadwal_survey: data.selectedDate ? new Date(data.selectedDate).toISOString() : null,
                 jam_survey: data.selectedTime,
-                status_pesanan: 'ON_PROGRESS',
+                status_pesanan: 'NEED_VALIDATION',
                 payment_method: data.paymentMethod,
                 tanggal_pesan: new Date().toISOString(),
+                kategori_layanan: data.kategori_layanan || 'Borongan',
             })
             .select()
             .single();
@@ -40,6 +43,19 @@ export const orderService = {
     },
 
     async getAllOrders() {
+        // Helper to map DB status to UI status
+        const mapStatus = (status: string) => {
+            switch (status) {
+                case 'ON_PROGRESS': return 'On Progress';
+                case 'NEED_VALIDATION': return 'Need Validation';
+                case 'DONE': return 'Done';
+                case 'CANCEL': return 'Cancel';
+                case 'CANCELLED': return 'Cancel'; // Handle legacy
+                case 'COMPLETED': return 'Done'; // Handle legacy
+                default: return 'Need Validation';
+            }
+        };
+
         const { data, error } = await supabase
             .from('orders')
             .select(`
@@ -49,6 +65,11 @@ export const orderService = {
             .order('tanggal_pesan', { ascending: false });
 
         if (error) throw error;
+
+        // Map status in the returned data locally if needed, but better to do it in component.
+        // However, if component expects raw data, we return raw data.
+        // Wait, OrderList.tsx does the mapping itself on line 46!
+        // So we just need to return the data here.
         return data;
     },
 

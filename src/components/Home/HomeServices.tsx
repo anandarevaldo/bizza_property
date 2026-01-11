@@ -21,7 +21,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Untuk Rumah */}
                         <div
-                            onClick={() => router.push('/User/Form/FormRumah')}
+                            onClick={() => router.push('/user/form/formrumah')}
                             className="bg-white border-2 border-red-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-red-100 h-52 flex flex-col justify-between hover:-translate-y-2"
                         >
                             <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
@@ -38,7 +38,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = () => {
 
                         {/* Untuk Bisnis */}
                         <div
-                            onClick={() => router.push('/User/Form/FormBusiness')}
+                            onClick={() => router.push('/user/form/formbusiness')}
                             className="bg-white border-2 border-green-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-green-100 h-52 flex flex-col justify-between hover:-translate-y-2">
                             <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
                                 <Briefcase className="w-40 h-40 text-green-500" />
@@ -57,7 +57,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Tukang Saja */}
                     <div
-                        onClick={() => router.push('/User/Home/Tukang')}
+                        onClick={() => router.push('/user/home/tukang')}
                         className="bg-white border-2 border-yellow-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-yellow-100 h-52 flex flex-col justify-between hover:-translate-y-2">
                         <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
                             <User className="w-40 h-40 text-yellow-500" />
@@ -73,7 +73,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = () => {
 
                     {/* Layanan Perbaikan */}
                     <div
-                        onClick={() => router.push('/User/Home/Layanan')}
+                        onClick={() => router.push('/user/home/layanan')}
                         className="bg-white border-2 border-cyan-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-cyan-100 h-52 flex flex-col justify-between hover:-translate-y-2">
                         <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
                             <Wrench className="w-40 h-40 text-cyan-500" />

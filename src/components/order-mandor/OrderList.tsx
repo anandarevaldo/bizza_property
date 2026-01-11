@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { Search, FileText, Briefcase, Users } from 'lucide-react';
 import { MandorOrderDetailModal } from './OrderDetailModal';
 
+import { scheduleService } from '@/lib/services/scheduleService';
+
 // Mock Team Data (Synced with TeamManagement)
 const internalTeam = [
     { id: 1, name: 'Budi Santoso', role: 'Tukang Cat' },
@@ -18,7 +20,7 @@ export interface Order {
     type: 'Jasa Tukang' | 'Borongan' | 'Material';
     total: string;
     date: string;
-    status: 'Menunggu' | 'Dikerjakan' | 'Selesai' | 'Batal' | 'Request Survey';
+    status: 'Need Validation' | 'On Progress' | 'Done' | 'Cancel';
     userBudget?: string;
     rabProposed?: number;
     rabStatus?: 'Pending' | 'Approved' | 'Rejected';
@@ -30,30 +32,50 @@ export interface Order {
 
 // Filtered to only show Projects, removing RABs
 export const initialOrders: Order[] = [
-    { id: 'PRJ-001', orderNumber: 'PRJ-001', customer: 'Bapak Ahmad Saifuddin', project: 'Renovasi Rumah Cluster A', type: 'Borongan', total: 'Rp 15.000.000', date: '2023-10-12', status: 'Dikerjakan', progress: 75 },
-    { id: 'PRJ-002', orderNumber: 'PRJ-002', customer: 'Ibu Siti Aminah', project: 'Pembuatan Kolam Ikan', type: 'Borongan', total: 'Rp 8.500.000', date: '2023-10-15', status: 'Selesai', progress: 100 },
-    { id: 'TKG-001', orderNumber: 'TKG-001', customer: 'Pak Budi Santoso', project: 'Perbaikan Atap Bocor', type: 'Jasa Tukang', total: 'Rp 2.500.000', date: '2023-10-18', status: 'Menunggu', progress: 0, assignedHandymanId: 1 },
-    { id: 'SRV-001', orderNumber: 'SRV-001', customer: 'Ibu Ratna', project: 'Survey Lokasi Renovasi', type: 'Borongan', total: 'Rp 0', date: '2023-10-20', status: 'Request Survey', progress: 0, userBudget: '5jt-10jt', rabStatus: 'Pending' },
+    { id: 'PRJ-001', orderNumber: 'PRJ-001', customer: 'Bapak Ahmad Saifuddin', project: 'Renovasi Rumah Cluster A', type: 'Borongan', total: 'Rp 15.000.000', date: '2023-10-12', status: 'On Progress', progress: 75 },
+    { id: 'PRJ-002', orderNumber: 'PRJ-002', customer: 'Ibu Siti Aminah', project: 'Pembuatan Kolam Ikan', type: 'Borongan', total: 'Rp 8.500.000', date: '2023-10-15', status: 'Done', progress: 100 },
+    { id: 'TKG-001', orderNumber: 'TKG-001', customer: 'Pak Budi Santoso', project: 'Perbaikan Atap Bocor', type: 'Jasa Tukang', total: 'Rp 2.500.000', date: '2023-10-18', status: 'Need Validation', progress: 0, assignedHandymanId: 1 },
+    { id: 'SRV-001', orderNumber: 'SRV-001', customer: 'Ibu Ratna', project: 'Survey Lokasi Renovasi', type: 'Borongan', total: 'Rp 0', date: '2023-10-20', status: 'Need Validation', progress: 0, userBudget: '5jt-10jt', rabStatus: 'Pending' },
 ];
 
 export const MandorOrderList: React.FC = () => {
-    const [orders, setOrders] = useState<Order[]>(initialOrders);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-    // Simulate fetching fresh data (budget) from "server" (localStorage)
+    // Fetch orders for Mandor (ID 1 for demo)
     React.useEffect(() => {
-        const simulatedBudget = localStorage.getItem('srv_simulation_budget');
-        if (simulatedBudget) {
-            setOrders(prev => prev.map(o => {
-                if (o.status === 'Request Survey') {
-                    return { ...o, userBudget: simulatedBudget };
-                }
-                return o;
-            }));
-        }
-    }, [isDetailModalOpen]); // Re-check when closing modal or on mount
+        const fetchOrders = async () => {
+            setIsLoading(true);
+            try {
+                // Simulate Mandor ID 1 (Pak Mandor Budi)
+                const data = await scheduleService.getByMandor(1);
+
+                const mappedOrders: Order[] = data.map(schedule => ({
+                    id: schedule.id,
+                    orderNumber: `ORD-${schedule.id}`,
+                    customer: schedule.customerName,
+                    type: (schedule.kategoriLayanan as any) || 'Borongan',
+                    total: schedule.budget || 'Rp 0',
+                    date: schedule.date,
+                    status: schedule.status as any,
+                    project: schedule.service,
+                    progress: schedule.status === 'Done' ? 100 : schedule.status === 'On Progress' ? 50 : 0,
+                    userBudget: schedule.budget
+                }));
+
+                setOrders(mappedOrders);
+            } catch (error) {
+                console.error('Error fetching details:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchOrders();
+    }, [isDetailModalOpen]);
 
     const handleViewDetail = (order: Order) => {
         setSelectedOrder(order);
@@ -62,10 +84,10 @@ export const MandorOrderList: React.FC = () => {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'Dikerjakan': return { label: 'ON PROGRESS', bg: 'bg-blue-600', text: 'text-blue-600', pillBg: 'bg-blue-100' };
-            case 'Selesai': return { label: 'APPROVED', bg: 'bg-green-500', text: 'text-green-600', pillBg: 'bg-green-100' }; // Used 'APPROVED' to match image, though 'COMPLETED' might be semantically better, sticking to visual match
-            case 'Menunggu': return { label: 'PENDING', bg: 'bg-yellow-400', text: 'text-yellow-600', pillBg: 'bg-yellow-100' };
-            case 'Request Survey': return { label: 'REQ SURVEY', bg: 'bg-purple-500', text: 'text-purple-600', pillBg: 'bg-purple-100' };
+            case 'On Progress': return { label: 'ON PROGRESS', bg: 'bg-blue-600', text: 'text-blue-600', pillBg: 'bg-blue-100' };
+            case 'Done': return { label: 'DONE', bg: 'bg-green-500', text: 'text-green-600', pillBg: 'bg-green-100' };
+            case 'Need Validation': return { label: 'NEED VALIDATION', bg: 'bg-yellow-400', text: 'text-yellow-600', pillBg: 'bg-yellow-100' };
+            case 'Cancel': return { label: 'CANCELLED', bg: 'bg-red-500', text: 'text-red-600', pillBg: 'bg-red-100' };
             default: return { label: status, bg: 'bg-gray-400', text: 'text-gray-600', pillBg: 'bg-gray-100' };
         }
     };
@@ -81,10 +103,10 @@ export const MandorOrderList: React.FC = () => {
             >
                 <div className="flex items-center gap-5 mb-4 md:mb-0">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl border shadow-sm
-                        ${order.status === 'Dikerjakan' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                            order.status === 'Selesai' ? 'bg-green-50 text-green-600 border-green-100' :
-                                order.status === 'Request Survey' ? 'bg-purple-50 text-purple-600 border-purple-100' :
-                                    'bg-yellow-50 text-yellow-600 border-yellow-100'
+                        ${order.status === 'On Progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                            order.status === 'Done' ? 'bg-green-50 text-green-600 border-green-100' :
+                                order.status === 'Need Validation' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                                    'bg-red-50 text-red-600 border-red-100'
                         }
 `}>
                         {order.project ? order.project.charAt(0) : 'P'}
@@ -102,7 +124,7 @@ export const MandorOrderList: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
-                    {order.status !== 'Menunggu' && ( // Only show progress bar if not pending/0
+                    {order.status !== 'Need Validation' && ( // Only show progress bar if not pending/0
                         <div className="w-32 hidden sm:block">
                             <div className="flex justify-between text-[10px] font-bold text-gray-400 mb-1">
                                 <span>Progress</span>
@@ -160,22 +182,28 @@ export const MandorOrderList: React.FC = () => {
                 </div>
 
                 <div className="space-y-4 px-4">
-                    {orders.filter(o => o.type === 'Jasa Tukang' && (
-                        o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
-                    )).map(order => (
-                        <OrderCard key={order.id} order={order} />
-                    ))}
-                    {orders.filter(o => o.type === 'Jasa Tukang' && (
-                        o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
-                    )).length === 0 && (
-                            <div className="p-8 text-center text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                                Tidak ada pekerjaan jasa tukang.
-                            </div>
-                        )}
+                    {isLoading ? (
+                        <div className="text-center py-8 text-gray-500">Memuat data...</div>
+                    ) : (
+                        <>
+                            {orders.filter(o => o.type === 'Jasa Tukang' && (
+                                o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
+                            )).map(order => (
+                                <OrderCard key={order.id} order={order} />
+                            ))}
+                            {orders.filter(o => o.type === 'Jasa Tukang' && (
+                                o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
+                            )).length === 0 && (
+                                    <div className="p-8 text-center text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                                        Tidak ada pekerjaan jasa tukang.
+                                    </div>
+                                )}
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -189,22 +217,28 @@ export const MandorOrderList: React.FC = () => {
                 </div>
 
                 <div className="space-y-4 px-4">
-                    {orders.filter(o => o.type === 'Borongan' && (
-                        o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
-                    )).map(order => (
-                        <OrderCard key={order.id} order={order} />
-                    ))}
-                    {orders.filter(o => o.type === 'Borongan' && (
-                        o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
-                    )).length === 0 && (
-                            <div className="p-8 text-center text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                                Tidak ada pekerjaan borongan.
-                            </div>
-                        )}
+                    {isLoading ? (
+                        <div className="text-center py-8 text-gray-500">Memuat data...</div>
+                    ) : (
+                        <>
+                            {orders.filter(o => o.type !== 'Jasa Tukang' && (
+                                o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
+                            )).map(order => (
+                                <OrderCard key={order.id} order={order} />
+                            ))}
+                            {orders.filter(o => o.type !== 'Jasa Tukang' && (
+                                o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
+                            )).length === 0 && (
+                                    <div className="p-8 text-center text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                                        Tidak ada pekerjaan borongan/lainnya.
+                                    </div>
+                                )}
+                        </>
+                    )}
                 </div>
             </div>
 

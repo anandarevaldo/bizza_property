@@ -11,18 +11,18 @@ export const FinanceOverview: React.FC = () => {
 
     // Calculate Stats
     const totalRevenueValue = orders
-        .filter(o => o.status === 'Paid')
+        .filter(o => o.status === 'Done')
         .reduce((acc, curr) => {
             const val = parseInt(curr.total.replace(/[^0-9]/g, ''), 10);
             return acc + (isNaN(val) ? 0 : val);
         }, 0);
 
     const totalRevenue = `Rp ${totalRevenueValue.toLocaleString('id-ID')}`;
-    const totalTransactions = orders.filter(o => o.status === 'Paid').length;
-    const pendingPayment = orders.filter(o => o.status === 'Unpaid').length;
+    const totalTransactions = orders.filter(o => o.status === 'Done').length;
+    const pendingPayment = orders.filter(o => o.status === 'Need Validation').length;
 
-    // Filter only financial transactions (Paid/Unpaid)
-    const financialTransactions = orders.filter(o => ['Paid', 'Unpaid'].includes(o.status));
+    // Filter only financial transactions (Done/Need Validation/On Progress)
+    const financialTransactions = orders.filter(o => ['Done', 'Need Validation', 'On Progress'].includes(o.status));
 
     const handleViewDetail = (order: Order) => {
         setSelectedOrder(order);
@@ -118,9 +118,9 @@ export const FinanceOverview: React.FC = () => {
                         financialTransactions.map(order => (
                             <div key={order.id} className="flex items-center justify-between p-5 rounded-3xl bg-gray-50 border border-gray-100 hover:bg-white hover:border-blue-200 hover:shadow-lg transition-all group">
                                 <div className="flex items-center gap-5">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg border border-gray-100 shadow-sm ${order.status === 'Paid' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg border border-gray-100 shadow-sm ${order.status === 'Done' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'
                                         }`}>
-                                        {order.status === 'Paid' ? <ArrowDownRight className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
+                                        {order.status === 'Done' ? <ArrowDownRight className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-900 text-base mb-0.5">{order.customer}</h4>
@@ -130,9 +130,9 @@ export const FinanceOverview: React.FC = () => {
 
                                 <div className="flex items-center gap-6">
                                     <div className="text-right">
-                                        <h4 className={`font-black text-base mb-1 ${order.status === 'Paid' ? 'text-green-600' : 'text-gray-900'
+                                        <h4 className={`font-black text-base mb-1 ${order.status === 'Done' ? 'text-green-600' : 'text-gray-900'
                                             }`}>{order.total}</h4>
-                                        <span className={`text-[10px] uppercase font-black tracking-wider px-3 py-1 rounded-full ${order.status === 'Paid' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'
+                                        <span className={`text-[10px] uppercase font-black tracking-wider px-3 py-1 rounded-full ${order.status === 'Done' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'
                                             }`}>
                                             {order.status}
                                         </span>

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Search, FileText, Briefcase, Users } from 'lucide-react';
 import { MandorOrderDetailModal } from './OrderDetailModal';
 
-import { scheduleService } from '@/lib/services/scheduleService';
+import { scheduleService, Schedule } from '../../lib/services/scheduleService';
 
 // Mock Team Data (Synced with TeamManagement)
 const internalTeam = [
@@ -28,6 +28,7 @@ export interface Order {
     // New fields for dashboard-like view
     project?: string;
     progress?: number;
+    pesananId?: number; // Real Order ID for foreign keys
 }
 
 // Filtered to only show Projects, removing RABs
@@ -53,7 +54,7 @@ export const MandorOrderList: React.FC = () => {
                 // Simulate Mandor ID 1 (Pak Mandor Budi)
                 const data = await scheduleService.getByMandor(1);
 
-                const mappedOrders: Order[] = data.map(schedule => ({
+                const mappedOrders: Order[] = data.map((schedule: Schedule) => ({
                     id: schedule.id,
                     orderNumber: `ORD-${schedule.id}`,
                     customer: schedule.customerName,
@@ -63,7 +64,8 @@ export const MandorOrderList: React.FC = () => {
                     status: schedule.status as any,
                     project: schedule.service,
                     progress: schedule.status === 'Done' ? 100 : schedule.status === 'On Progress' ? 50 : 0,
-                    userBudget: schedule.budget
+                    userBudget: schedule.budget,
+                    pesananId: schedule.orderId
                 }));
 
                 setOrders(mappedOrders);

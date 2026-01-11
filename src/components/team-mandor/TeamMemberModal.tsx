@@ -9,10 +9,11 @@ interface TeamMember {
     id: number;
     name: string;
     role: string;
+    keahlian?: string;
     phone: string;
-    skill: string;
+    specialty?: string;
     rating: number;
-    experience?: string;
+    domisili?: string;
     bio?: string;
     image?: string;
 }
@@ -28,14 +29,14 @@ export const TeamMemberModal: React.FC<TeamMemberModalProps> = ({ isOpen, onClos
     const { services } = useServices();
     const [formData, setFormData] = useState<Partial<TeamMember>>({
         name: '',
-        role: '',
+        role: 'Tukang', // Default role
+        keahlian: '',
         phone: '',
-        skill: 'Intermediate',
-        experience: '1 Tahun',
+        domisili: 'Jakarta',
         bio: '',
     });
 
-    const [selectedRole, setSelectedRole] = useState<{name: string, icon: any, color: string, bg: string}>({
+    const [selectedRole, setSelectedRole] = useState<{ name: string, icon: any, color: string, bg: string }>({
         name: 'Pilih Spesialisasi',
         icon: Briefcase,
         color: 'text-gray-400',
@@ -44,8 +45,8 @@ export const TeamMemberModal: React.FC<TeamMemberModalProps> = ({ isOpen, onClos
     const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
     useEffect(() => {
-        if (services.length > 0 && !formData.role && !member) {
-            handleChange('role', services[0].name);
+        if (services.length > 0 && !formData.keahlian && !member) {
+            handleChange('keahlian', services[0].name);
             const Icon = ICON_MAP[services[0].icon_name] || Home;
             setSelectedRole({
                 name: services[0].name,
@@ -59,7 +60,7 @@ export const TeamMemberModal: React.FC<TeamMemberModalProps> = ({ isOpen, onClos
     useEffect(() => {
         if (member) {
             setFormData(member);
-            const s = services.find(s => s.name === member.role);
+            const s = services.find(s => s.name === member.keahlian);
             if (s) {
                 const Icon = ICON_MAP[s.icon_name] || Home;
                 setSelectedRole({
@@ -72,10 +73,10 @@ export const TeamMemberModal: React.FC<TeamMemberModalProps> = ({ isOpen, onClos
         } else {
             setFormData({
                 name: '',
-                role: services[0]?.name || '',
+                role: 'Tukang',
+                keahlian: services[0]?.name || '',
                 phone: '',
-                skill: 'Intermediate',
-                experience: '1 Tahun',
+                domisili: 'Jakarta',
                 bio: '',
             });
             if (services[0]) {
@@ -104,7 +105,7 @@ export const TeamMemberModal: React.FC<TeamMemberModalProps> = ({ isOpen, onClos
                 color: s.color_class,
                 bg: s.bg_gradient.split(' ')[0]
             });
-            handleChange('role', roleName);
+            handleChange('keahlian', roleName);
             setIsRoleDropdownOpen(false);
         }
     };
@@ -214,13 +215,13 @@ export const TeamMemberModal: React.FC<TeamMemberModalProps> = ({ isOpen, onClos
                                                 key={type.id}
                                                 type="button"
                                                 onClick={() => handleRoleSelect(type.name)}
-                                                className={`w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors ${formData.role === type.name ? 'bg-blue-50' : ''}`}
+                                                className={`w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors ${formData.keahlian === type.name ? 'bg-blue-50' : ''}`}
                                             >
                                                 <div className={`p-2 rounded-lg ${type.bg_gradient.split(' ')[0]} ${type.color_class}`}>
                                                     <Icon className="w-4 h-4" />
                                                 </div>
-                                                <span className={`font-bold text-sm ${formData.role === type.name ? 'text-blue-700' : 'text-gray-700'}`}>{type.name}</span>
-                                                {formData.role === type.name && <Check className="w-4 h-4 text-blue-600 ml-auto" />}
+                                                <span className={`font-bold text-sm ${formData.keahlian === type.name ? 'text-blue-700' : 'text-gray-700'}`}>{type.name}</span>
+                                                {formData.keahlian === type.name && <Check className="w-4 h-4 text-blue-600 ml-auto" />}
                                             </button>
                                         );
                                     })}
@@ -228,34 +229,20 @@ export const TeamMemberModal: React.FC<TeamMemberModalProps> = ({ isOpen, onClos
                             )}
                         </div>
 
-                        {/* Skill Level */}
+                        {/* Domisili (Replaces Skill Level) */}
                         <div>
-                            <label className="block text-sm font-black text-gray-700 mb-2">Skill Level</label>
+                            <label className="block text-sm font-black text-gray-700 mb-2">Domisili</label>
                             <div className="relative">
-                                <Award className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <select
-                                    value={formData.skill}
-                                    onChange={e => handleChange('skill', e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border-2 border-gray-100 focus:outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-gray-900 appearance-none cursor-pointer"
-                                >
-                                    <option value="Beginner">Beginner</option>
-                                    <option value="Intermediate">Intermediate</option>
-                                    <option value="Expert">Expert</option>
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                                <Home className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={formData.domisili}
+                                    onChange={e => handleChange('domisili', e.target.value)}
+                                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border-2 border-gray-100 focus:outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-gray-900"
+                                    placeholder="Domisili saat ini"
+                                />
                             </div>
                         </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-black text-gray-700 mb-2">Pengalaman</label>
-                        <input
-                            type="text"
-                            value={formData.experience}
-                            onChange={e => handleChange('experience', e.target.value)}
-                            className="w-full p-4 rounded-2xl bg-gray-50 border-2 border-gray-100 focus:outline-none focus:border-blue-500 focus:bg-white transition-all font-bold text-gray-900"
-                            placeholder="Contoh: 5 Tahun di Konstruksi Gedung"
-                        />
                     </div>
 
                     <div>

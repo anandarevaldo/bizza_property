@@ -5,7 +5,9 @@ import { Calendar as CalendarIcon, Clock, MapPin, User, HardHat, CheckCircle2, X
 // import { initialMandors } from '../mandor-admin/MandorList';
 import { Mandor } from '../dashboard-admin/types';
 import { useServices } from '@/hooks/useServices';
-import { mandorService } from '@/lib/services/mandorService';
+// import { mandorService } from '@/lib/services/mandorService';
+import { teamService } from '@/lib/services/teamService';
+import { TeamMember } from '../team-mandor/TeamList';
 
 interface Schedule {
     id: string;
@@ -16,6 +18,7 @@ interface Schedule {
     address: string;
     mandor: string;
     mandorId?: number;
+    assignedHandymanId?: number; // New field for Tukang
     status: 'Need Validation' | 'On Progress' | 'Cancel' | 'Done';
 }
 
@@ -28,29 +31,36 @@ interface ScheduleEditModalProps {
     isSaving?: boolean;
 }
 
-export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, onClose, schedule, selectedDate, onSave, isSaving = false }) => {
+export const MandorScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, onClose, schedule, selectedDate, onSave, isSaving = false }) => {
+
     const [formData, setFormData] = useState<Partial<Schedule>>({});
     const { services: dbServices } = useServices();
-    const [availableMandors, setAvailableMandors] = useState<Mandor[]>([]);
+    const [availableHandymen, setAvailableHandymen] = useState<TeamMember[]>([]);
+    const [filterSkill, setFilterSkill] = useState<string>('');
 
     useEffect(() => {
-        const fetchMandors = async () => {
+        const fetchTeam = async () => {
             try {
-                const data = await mandorService.getAll();
-                setAvailableMandors(data);
+                // Fetch members for Mandor (assuming ID 1 for now or from context)
+                // In real app, get current mandor ID
+                const MANDOR_ID = 1;
+                const data = await teamService.getMembers(MANDOR_ID);
+                setAvailableHandymen(data);
             } catch (error) {
-                console.error('Error fetching mandors:', error);
+                console.error('Error fetching team:', error);
             }
         };
-        fetchMandors();
+        fetchTeam();
     }, []);
 
     useEffect(() => {
         if (isOpen) {
             if (schedule) {
                 setFormData(schedule);
+                // setFilterSkill(schedule.service || ''); // Reverted as per user request
             } else {
-                setFormData({ date: selectedDate, status: 'Need Validation' });
+                setFormData({ date: selectedDate, status: 'On Progress' });
+                // setFilterSkill('');
             }
         }
     }, [isOpen, schedule, selectedDate]);
@@ -71,7 +81,7 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                     <div>
                         <h3 className="text-xl font-black text-gray-900">{schedule ? 'Edit Jadwal' : 'Jadwal Baru'}</h3>
                         <p className="text-gray-500 text-xs font-medium mt-1">
-                            {schedule ? `Edit data kunjungan` : 'Admin menentukan Mandor untuk proyek ini'}
+                            {schedule ? `Edit data kunjungan & penugasan` : 'Tugaskan Tukang untuk proyek ini'}
                         </p>
                     </div>
                     <button onClick={onClose} className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors group border border-transparent hover:border-gray-200">
@@ -115,8 +125,8 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                         </div>
                         <div className="mt-4">
                             <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Status</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                {['Need Validation', 'On Progress', 'Done', 'Cancel'].map((status) => (
+                            <div className="grid grid-cols-3 gap-2">
+                                {['On Progress', 'Done', 'Cancel'].map((status) => (
                                     <button
                                         key={status}
                                         type="button"
@@ -124,8 +134,7 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                                         className={`px-2 py-2 rounded-lg text-xs font-bold border transition-all ${formData.status === status
                                             ? status === 'On Progress' ? 'bg-blue-50 border-blue-500 text-blue-700' :
                                                 status === 'Done' ? 'bg-green-50 border-green-500 text-green-700' :
-                                                    status === 'Need Validation' ? 'bg-yellow-50 border-yellow-500 text-yellow-700' :
-                                                        'bg-red-50 border-red-500 text-red-700'
+                                                    'bg-red-50 border-red-500 text-red-700'
                                             : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'
                                             }`}
                                     >
@@ -175,31 +184,69 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                             <HardHat className="w-4 h-4 text-blue-600" /> Detail Penugasan
                         </h4>
                         <div className="mt-4">
-                            <div>
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Mandor (Penanggung Jawab)</label>
-                                <div className="relative">
-                                    <select
-                                        value={formData.mandorId || ''}
-                                        onChange={e => {
-                                            const selectedId = parseInt(e.target.value);
-                                            const selectedMandor = availableMandors.find(m => parseInt(m.id) === selectedId);
-                                            setFormData({
-                                                ...formData,
-                                                mandorId: selectedId,
-                                                mandor: selectedMandor ? selectedMandor.name : ''
-                                            });
-                                        }}
-                                        className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all font-medium text-sm appearance-none bg-white"
-                                        required
-                                    >
-                                        <option value="" disabled>Pilih Mandor</option>
-                                        {availableMandors.map((mandor: Mandor) => (
-                                            <option key={mandor.id} value={mandor.id}>
-                                                {mandor.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Skill Selection - Filter Only */}
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                        KEAHLIAN
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            value={filterSkill}
+                                            onChange={e => {
+                                                setFilterSkill(e.target.value);
+                                                setFormData({
+                                                    ...formData,
+                                                    assignedHandymanId: undefined // Reset handyman when filter changes
+                                                });
+                                            }}
+                                            className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all font-medium text-sm appearance-none bg-white"
+                                        >
+                                            <option value="">Semua Keahlian</option>
+                                            {dbServices.map((service) => (
+                                                <option key={service.id} value={service.name}>
+                                                    {service.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                                    </div>
+                                </div>
+
+                                {/* Handyman Selection - Filtered by Skill */}
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                        TUKANG
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.assignedHandymanId || ''}
+                                            onChange={e => {
+                                                const selectedId = parseInt(e.target.value);
+                                                setFormData({
+                                                    ...formData,
+                                                    assignedHandymanId: selectedId
+                                                });
+                                            }}
+                                            className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all font-medium text-sm appearance-none bg-white"
+                                            required
+                                            disabled={!!filterSkill && availableHandymen.filter(h => h.keahlian === filterSkill).length === 0}
+                                        >
+                                            <option value="" disabled>Pilih Tukang</option>
+                                            {availableHandymen
+                                                .filter(h => !filterSkill || h.keahlian === filterSkill)
+                                                .map((tukang: TeamMember) => (
+                                                    <option key={tukang.id} value={tukang.id}>
+                                                        {tukang.name}
+                                                    </option>
+                                                ))}
+
+                                            {filterSkill && availableHandymen.filter(h => h.keahlian === filterSkill).length === 0 && (
+                                                <option value="" disabled>Tidak ada tukang {filterSkill}</option>
+                                            )}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                                    </div>
                                 </div>
                             </div>
                         </div>

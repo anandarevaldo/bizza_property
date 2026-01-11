@@ -117,7 +117,7 @@ const BookingFormHandyman: React.FC<BookingFormHandymanProps> = ({ switchView, s
                 description: `Tukang: ${selectedHandymen.map(h => `${h.type} (${h.quantity})`).join(', ')}. Detail: ${description}`,
                 address: addressDetails,
                 budget: finalTotal.toString(),
-                selectedDate: selectedDate?.toISOString() || new Date().toISOString(),
+                selectedDate: selectedDate ? selectedDate.toISOString() : new Date().toISOString(),
                 selectedTime: selectedTimeSlot || '',
                 paymentMethod: 'QRIS',
                 kategori_layanan: 'Jasa Tukang'

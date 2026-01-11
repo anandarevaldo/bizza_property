@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { X, MapPin, Calendar, Clock, AlertCircle, Upload, FileText, Image as ImageIcon, Save, CheckCircle, User, HardHat, ChevronDown, Zap, Palette, Wrench, Briefcase, Wallet } from 'lucide-react';
+import { documentationService, Documentation } from '@/lib/services/documentationService';
 
 export interface Order {
     id: string;
@@ -14,6 +15,7 @@ export interface Order {
     rabProposed?: number;
     rabStatus?: 'Pending' | 'Approved' | 'Rejected';
     assignedHandymanId?: number;
+    pesananId?: number; // Real Order ID
     handymanName?: string;
     handymanRole?: string;
     project?: string;
@@ -59,10 +61,8 @@ interface MandorOrderDetailModalProps {
 export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ isOpen, onClose, order, onSave }) => {
     const initialProgress = order?.progress || 0;
     const [currentProgress, setCurrentProgress] = useState(initialProgress);
-    const [photos, setPhotos] = useState<string[]>([
-        'https://source.unsplash.com/random/400x400?construction,house&sig=1',
-        'https://source.unsplash.com/random/400x400?construction,house&sig=2'
-    ]);
+    const [documentation, setDocumentation] = useState<Documentation[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
 
     const [selectedHandymanId, setSelectedHandymanId] = useState<number | undefined>(undefined);
 
@@ -103,6 +103,15 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
         if (order) {
             setCurrentProgress(order.progress || 0);
             setSelectedHandymanId(order.assignedHandymanId);
+
+            // Fetch documentation
+            const fetchDocs = async () => {
+                // Use pesananId if available, otherwise fallback (though likely won't work for db foreign key)
+                const targetId = order.pesananId ? order.pesananId.toString() : order.id;
+                const docs = await documentationService.getByOrderId(targetId);
+                setDocumentation(docs);
+            };
+            fetchDocs();
 
             // Parse existing estimation string
             if (order.estimation) {
@@ -167,18 +176,39 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
         fileInputRef.current?.click();
     };
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (file) {
-            const imageUrl = URL.createObjectURL(file);
-            setPhotos([...photos, imageUrl]);
+        if (file && order) {
+            try {
+                if (!order.pesananId) {
+                    throw new Error("Order ID (Pesanan ID) tidak ditemukan. Jadwal ini mungkin tidak terhubung dengan Order.");
+                }
+
+                setIsUploading(true);
+                // Use real pesananId
+                await documentationService.uploadProof(file, order.pesananId.toString(), 'Uploaded by Mandor');
+
+                // Refresh list using the same ID
+                const docs = await documentationService.getByOrderId(order.pesananId.toString());
+                setDocumentation(docs);
+            } catch (error: any) {
+                console.error("Upload failed", error);
+                alert(`Gagal mengupload foto: ${error.message || 'Unknown error'}`);
+            } finally {
+                setIsUploading(false);
+            }
         }
     };
 
-    const handleDeletePhoto = (index: number) => {
-        const newPhotos = [...photos];
-        newPhotos.splice(index, 1);
-        setPhotos(newPhotos);
+    const handleDeletePhoto = async (id: string, fileUrl: string) => {
+        if (!confirm("Hapus foto ini?")) return;
+        try {
+            await documentationService.delete(id, fileUrl);
+            setDocumentation(prev => prev.filter(d => d.id !== id));
+        } catch (error) {
+            console.error("Delete failed", error);
+            alert("Gagal menghapus foto.");
+        }
     };
 
     const handleEstValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -530,7 +560,7 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
                                     <h3 className="font-extrabold text-gray-900 text-lg flex items-center gap-2">
                                         <ImageIcon className="w-5 h-5 text-gray-400" /> Dokumentasi
                                     </h3>
-                                    <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold">{photos.length} Foto</span>
+                                    <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold">{documentation.length} Foto</span>
                                 </div>
 
                                 {/* Custom Upload Area */}
@@ -540,37 +570,38 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
                                     className="hidden"
                                     accept="image/*"
                                     onChange={handleFileChange}
+                                    disabled={isUploading}
                                 />
                                 <div
                                     onClick={handleUploadClick}
-                                    className="group relative border-3 border-dashed border-gray-100 hover:border-blue-200 bg-gray-50 hover:bg-blue-50/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 mb-8"
+                                    className={`group relative border-3 border-dashed border-gray-100 hover:border-blue-200 bg-gray-50 hover:bg-blue-50/30 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 mb-8 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
                                 >
                                     <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-blue-500 mb-4 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
-                                        <Upload className="w-7 h-7" />
+                                        <Upload className={`w-7 h-7 ${isUploading ? 'animate-bounce' : ''}`} />
                                     </div>
-                                    <h4 className="font-bold text-gray-900 mb-1">Upload Foto Baru</h4>
+                                    <h4 className="font-bold text-gray-900 mb-1">{isUploading ? 'Mengupload...' : 'Upload Foto Baru'}</h4>
                                     <p className="text-gray-400 text-xs font-medium max-w-[200px]">Tap disini untuk mengambil foto atau pilih dari galeri</p>
                                 </div>
 
                                 {/* Gallery Grid */}
                                 <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-4">
-                                    {photos.length === 0 ? (
+                                    {documentation.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center h-32 text-gray-300 border border-gray-100 rounded-3xl border-dashed">
                                             <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
                                             <span className="text-xs font-bold">Belum ada dokumentasi</span>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-2 gap-3">
-                                            {photos.map((photo, i) => (
-                                                <div key={i} className="aspect-square rounded-2xl relative overflow-hidden group shadow-sm bg-gray-100">
+                                            {documentation.map((doc) => (
+                                                <div key={doc.id} className="aspect-square rounded-2xl relative overflow-hidden group shadow-sm bg-gray-100">
                                                     <img
-                                                        src={photo}
-                                                        alt={`Bukti ${i + 1}`}
+                                                        src={doc.fileUrl}
+                                                        alt={doc.description}
                                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                                     />
                                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
                                                         <button
-                                                            onClick={() => handleDeletePhoto(i)}
+                                                            onClick={() => handleDeletePhoto(doc.id, doc.fileUrl)}
                                                             className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-colors shadow-lg backdrop-blur-sm"
                                                         >
                                                             <X className="w-4 h-4" />

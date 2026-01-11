@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Package, Calendar, User, CreditCard, MapPin, Phone, Mail, Clock, CheckCircle } from 'lucide-react';
+import { documentationService, Documentation } from '@/lib/services/documentationService';
 
 interface Order {
     id: string;
@@ -20,6 +21,21 @@ interface OrderDetailModalProps {
 }
 
 export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onClose, order }) => {
+    const [documentation, setDocumentation] = useState<Documentation[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && order) {
+            const fetchDocs = async () => {
+                const docs = await documentationService.getByOrderId(order.id);
+                setDocumentation(docs);
+            };
+            fetchDocs();
+        } else {
+            setDocumentation([]);
+        }
+    }, [isOpen, order]);
+
     if (!isOpen || !order) return null;
 
     const getStatusStyle = (status: string) => {
@@ -110,6 +126,36 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onCl
                                 <p className="text-sm text-gray-500">Layanan sedang dikerjakan</p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Progress Proof Section */}
+                    <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-blue-600" />
+                            Bukti Progress
+                        </h3>
+
+                        {/* Proof Grid */}
+                        {documentation.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-4">
+                                {documentation.map((doc) => (
+                                    <div key={doc.id} className="relative group rounded-xl overflow-hidden aspect-video bg-gray-200 border border-gray-200">
+                                        <img
+                                            src={doc.fileUrl}
+                                            alt={doc.description}
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <p className="text-white text-xs font-bold px-2 text-center">{new Date(doc.uploadedAt).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-gray-400">
+                                <p className="text-sm font-medium">Belum ada bukti progress yang diupload oleh Mandor.</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Payment Summary */}

@@ -174,9 +174,9 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
                 description: `Masalah: ${problemTitle}. Detail: ${description}`,
                 address: addressSearch + (addressDetails ? `, ${addressDetails}` : ''),
                 budget: finalTotal.toString(),
-                selectedDate: selectedDate?.toISOString() || new Date().toISOString(),
+                selectedDate: selectedDate ? selectedDate.toISOString() : new Date().toISOString(),
                 selectedTime: selectedTimeSlot || '',
-                paymentMethod: 'QRIS',
+                paymentMethod: 'CASH',
                 kategori_layanan: 'Jasa Tukang'
             });
 

@@ -5,6 +5,8 @@ import { Calendar as CalendarIcon, Clock, MapPin, User, ChevronRight, ChevronLef
 import { MandorScheduleEditModal } from '../schedule-mandor/MandorScheduleEditModal';
 import { MandorScheduleDetailModal } from '../schedule-mandor/MandorScheduleDetailModal';
 
+import { scheduleService } from '../../lib/services/scheduleService';
+
 export interface Schedule {
     id: string;
     customerName: string;
@@ -13,15 +15,8 @@ export interface Schedule {
     time: string;
     address: string;
     mandor: string;
-    mandorId?: number;
     status: 'Need Validation' | 'On Progress' | 'Cancel' | 'Done';
-    assignedHandymanId?: number;
-    handymanName?: string;
-    orderId?: number;
-    handymanId?: string;
 }
-
-import { scheduleService } from '../../lib/services/scheduleService';
 
 
 // export const initialSchedules: Schedule[] = [
@@ -43,17 +38,17 @@ export const MandorScheduleList: React.FC = () => {
 
     const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(null);
 
-    // Fetch schedules for Mandor (ID 1 for demo)
+    // Fetch schedules for logged-in Mandor
     React.useEffect(() => {
         const fetchSchedules = async () => {
             setIsLoading(true);
             try {
-                // Simulate Mandor ID 1 (Pak Mandor Budi)
-                const data = await scheduleService.getByMandor(1);
-                // Cast to local Schedule type if needed, or ensure compatibility
-                setSchedules(data as any);
+                // Use dynamic RBAC method
+                const data = await scheduleService.getMySchedules();
+                setSchedules(data);
             } catch (error) {
                 console.error('Error fetching schedules:', error);
+                // Optional: Redirect to login or show error state
             } finally {
                 setIsLoading(false);
             }

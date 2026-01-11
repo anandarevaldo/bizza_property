@@ -131,7 +131,7 @@ export const OrderList: React.FC = () => {
                     />
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-                    {['All', 'Material', 'Layanan', 'Jasa'].map(type => (
+                    {['All', 'Layanan', 'Jasa'].map(type => (
                         <button
                             key={type}
                             onClick={() => setFilterType(type)}
@@ -157,6 +157,7 @@ export const OrderList: React.FC = () => {
                             <th className="p-6 font-extrabold text-gray-400 text-xs uppercase tracking-wider">Total</th>
                             <th className="p-6 font-extrabold text-gray-400 text-xs uppercase tracking-wider">Tanggal</th>
                             <th className="p-6 font-extrabold text-gray-400 text-xs uppercase tracking-wider">Status</th>
+                            <th className="p-6 font-extrabold text-gray-400 text-xs uppercase tracking-wider">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -164,7 +165,7 @@ export const OrderList: React.FC = () => {
                             const statusStyle = getStatusStyle(order.status);
                             const StatusIcon = statusStyle.icon;
                             return (
-                                <tr key={order.id} className="hover:bg-gray-50/80 transition-colors group cursor-pointer" onClick={() => handleViewDetail(order)}>
+                                <tr key={order.id} className="hover:bg-gray-50/80 transition-colors group">
                                     <td className="p-6 font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{order.orderNumber}</td>
                                     <td className="p-6 font-bold text-gray-900">{order.customer}</td>
                                     <td className="p-6">
@@ -177,24 +178,19 @@ export const OrderList: React.FC = () => {
                                     <td className="p-6 font-black text-gray-900 text-lg">{order.total}</td>
                                     <td className="p-6 text-gray-400 font-bold text-sm">{order.date}</td>
                                     <td className="p-6 relative">
-                                        {/* Status Pill */}
-                                        <div className="relative group/status inline-block" onClick={(e) => e.stopPropagation()}>
-                                            <div className={`flex items-center gap-3 pl-4 pr-6 py-2.5 rounded-full text-xs font-extrabold border cursor-pointer transition-all hover:shadow-md ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
-                                                <StatusIcon className="w-4 h-4" />
-                                                <select
-                                                    value={order.status}
-                                                    onChange={(e) => handleStatusChange(order.id, e.target.value as Order['status'])}
-                                                    className={`absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none z-10`}
-                                                >
-                                                    <option value="Need Validation">Need Validation</option>
-                                                    <option value="On Progress">On Progress</option>
-                                                    <option value="Done">Done</option>
-                                                    <option value="Cancel">Cancel</option>
-                                                </select>
-                                                <span>{order.status}</span>
-                                                <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-50" />
-                                            </div>
+                                        {/* Status Pill - Static display */}
+                                        <div className={`inline-flex items-center gap-3 pl-4 pr-6 py-2.5 rounded-full text-xs font-extrabold border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
+                                            <StatusIcon className="w-4 h-4" />
+                                            <span>{order.status}</span>
                                         </div>
+                                    </td>
+                                    <td className="p-6">
+                                        <button
+                                            onClick={() => handleViewDetail(order)}
+                                            className="text-blue-600 font-bold hover:text-blue-800 hover:underline transition-all text-sm"
+                                        >
+                                            Details
+                                        </button>
                                     </td>
                                 </tr>
                             );

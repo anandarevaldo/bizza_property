@@ -1,10 +1,5 @@
 import { supabase } from '../supabaseClient';
 
-// Database enum values for status_pesanan
-// Database enum: ON_PROGRESS, CANCEL, DONE
-// Frontend display: On Progress, Cancel, Done
-
-// Schedule interface matching frontend display
 export interface Schedule {
     id: string;
     customerName: string;
@@ -18,260 +13,161 @@ export interface Schedule {
     orderId?: number;
     notes?: string;
     budget?: string;
-    // Original order fields
     tipePesanan?: string;
     tipeProperti?: string;
     kategoriLayanan?: 'Borongan' | 'Jasa Tukang';
+    assignedHandymanId?: number;
+    handymanName?: string;
 }
 
-// Database enum values
-export type OrderStatusEnum = 'NEED_VALIDATION' | 'ON_PROGRESS' | 'CANCEL' | 'DONE';
+export const scheduleService = {
+    getAll: async (): Promise<Schedule[]> => {
+        const { data, error } = await supabase
+            .from('jadwal')
+            .select('*, data_anggota(nama)')
+            .order('tanggal', { ascending: false });
 
-// Map database status to frontend display status
-const mapOrderStatus = (status: string): Schedule['status'] => {
-    switch (status) {
-        case 'ON_PROGRESS': return 'On Progress';
-        case 'NEED_VALIDATION': return 'Need Validation';
-        case 'CANCEL': return 'Cancel';
-        case 'DONE': return 'Done';
-        default: return 'Need Validation';
+        if (error) {
+            console.error('Error fetching schedules:', error);
+            return [];
+        }
+
+        return data.map(mapToSchedule);
+    },
+
+    getByMandor: async (mandorId: number): Promise<Schedule[]> => {
+        const { data, error } = await supabase
+            .from('jadwal')
+            .select('*, data_anggota(nama)')
+            .eq('mandor_id', mandorId)
+            .order('tanggal', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching schedules for mandor:', error);
+            return [];
+        }
+
+        return data.map(mapToSchedule);
+    },
+
+    // ... inside create and update, usually need to return single with join too, or just basic. 
+    // For simplicity, let's update mapToSchedule first. 
+
+    create: async (schedule: Partial<Schedule>) => {
+        const { data, error } = await supabase
+            .from('jadwal')
+            .insert({
+                nama_customer: schedule.customerName,
+                layanan: schedule.service,
+                tanggal: schedule.date,
+                jam: schedule.time,
+                alamat: schedule.address || '',
+                nama_mandor: schedule.mandor,
+                mandor_id: schedule.mandorId,
+                status: schedule.status, // Allow saving 'Need Validation' if needed, but UI will restrict
+                catatan: schedule.notes,
+                kategori_layanan: schedule.kategoriLayanan || 'Borongan',
+                anggota_id: schedule.assignedHandymanId
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapToSchedule(data);
+    },
+
+    update: async (id: string, updates: Partial<Schedule>) => {
+        const updatePayload: any = {};
+        if (updates.date) updatePayload.tanggal = updates.date;
+        if (updates.time) updatePayload.jam = updates.time;
+        if (updates.status) updatePayload.status = updates.status;
+        if (updates.mandorId) updatePayload.mandor_id = updates.mandorId;
+        if (updates.mandor) updatePayload.nama_mandor = updates.mandor;
+        if (updates.customerName) updatePayload.nama_customer = updates.customerName;
+        if (updates.service) updatePayload.layanan = updates.service;
+        if (updates.address) updatePayload.alamat = updates.address;
+
+        // Add new fields to update payload if needed, e.g. anggota_id
+        if (updates.assignedHandymanId) updatePayload.anggota_id = updates.assignedHandymanId;
+
+        if (Object.keys(updatePayload).length === 0) return null;
+
+        const { data, error } = await supabase
+            .from('jadwal')
+            .update(updatePayload)
+            .eq('jadwal_id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return mapToSchedule(data);
+    },
+
+    getMySchedules: async (): Promise<Schedule[]> => {
+        // 1. Get current logged in user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+            console.error('Error getting user:', userError);
+            throw new Error('Not authenticated');
+        }
+
+        // 2. Get mandor_id from data_mandor
+        const { data: mandorData, error: mandorError } = await supabase
+            .from('data_mandor')
+            .select('mandor_id')
+            .eq('user_id', user.id)
+            .single();
+
+        if (mandorError || !mandorData) {
+            console.error('Error fetching mandor profile:', mandorError);
+            // Return empty if not a mandor (or throw custom error)
+            return [];
+        }
+
+        // 3. Fetch schedules for this mandor
+        return scheduleService.getByMandor(mandorData.mandor_id);
     }
 };
 
-// Map frontend display status back to database enum
-const mapStatusToDb = (status: Schedule['status']): OrderStatusEnum => {
+function mapToSchedule(dbRecord: any): Schedule {
+    return {
+        id: dbRecord.jadwal_id?.toString(),
+        customerName: dbRecord.nama_customer || 'Unknown',
+        service: dbRecord.layanan || 'Service',
+        date: dbRecord.tanggal,
+        time: dbRecord.jam || '09:00',
+        address: dbRecord.alamat || '',
+        mandor: dbRecord.nama_mandor || 'Belum Ditugaskan',
+        mandorId: dbRecord.mandor_id,
+        status: dbRecord.status as any || 'Need Validation',
+        orderId: dbRecord.pesanan_id,
+        notes: dbRecord.catatan,
+        budget: undefined,
+        tipePesanan: undefined,
+        tipeProperti: undefined,
+        kategoriLayanan: dbRecord.kategori_layanan || 'Borongan',
+        assignedHandymanId: dbRecord.anggota_id,
+        handymanName: dbRecord.data_anggota?.nama
+    };
+}
+
+function mapStatusToDb(status?: string): string {
     switch (status) {
-        case 'On Progress': return 'ON_PROGRESS';
         case 'Need Validation': return 'NEED_VALIDATION';
-        case 'Cancel': return 'CANCEL';
+        case 'On Progress': return 'ON_PROGRESS';
         case 'Done': return 'DONE';
+        case 'Cancel': return 'CANCELLED';
         default: return 'NEED_VALIDATION';
     }
-};
+}
 
-// Map database order row to frontend Schedule
-const mapOrderToSchedule = (order: any): Schedule => {
-    // Extract date from jadwal_survey
-    let dateStr = new Date().toISOString().split('T')[0];
-    if (order.jadwal_survey) {
-        dateStr = new Date(order.jadwal_survey).toISOString().split('T')[0];
+function mapStatusFromDb(status: string): 'Need Validation' | 'On Progress' | 'Cancel' | 'Done' {
+    switch (status) {
+        case 'NEED_VALIDATION': return 'Need Validation';
+        case 'ON_PROGRESS': return 'On Progress';
+        case 'DONE': return 'Done';
+        case 'CANCELLED': return 'Cancel';
+        default: return 'Need Validation';
     }
-
-    // Build service name - prioritize layanan name, then parse deskripsi
-    let serviceName = 'Layanan Umum';
-    if (order.layanan?.nama_layanan) {
-        serviceName = order.layanan.nama_layanan;
-    } else if (order.deskripsi && order.deskripsi.trim() !== '') {
-        // Try to parse "Tukang: Tukang Cat (1). Detail: xxx" format
-        const tukangMatch = order.deskripsi.match(/Tukang:\s*([^(]+)/);
-        if (tukangMatch && tukangMatch[1]) {
-            serviceName = tukangMatch[1].trim();
-        } else {
-            // Just use deskripsi as-is if can't parse
-            serviceName = order.deskripsi.substring(0, 50); // Limit length
-        }
-    } else if (order.tipe_pesanan) {
-        serviceName = `Pesanan ${order.tipe_pesanan}`;
-    }
-
-    return {
-        id: order.pesanan_id?.toString() || '',
-        customerName: order.customer_name || 'Unknown Customer',
-        service: serviceName,
-        date: dateStr,
-        time: order.jam_survey || '09:00',
-        address: order.alamat_proyek || '',
-        mandor: order.mandor?.nama || 'Belum Ditugaskan',
-        mandorId: order.mandor_id || undefined,
-        status: mapOrderStatus(order.status_pesanan),
-        orderId: order.pesanan_id,
-        notes: order.deskripsi,
-        budget: order.budget,
-        tipePesanan: order.tipe_pesanan,
-        tipeProperti: order.tipe_properti,
-        kategoriLayanan: order.kategori_layanan || 'Borongan',
-    };
-};
-
-// --- CRUD Operations (reading from orders table) ---
-
-// GET all schedules (from orders that have jadwal_survey)
-export const getSchedules = async (): Promise<Schedule[]> => {
-    const { data, error } = await supabase
-        .from('orders')
-        .select(`
-            *,
-            layanan:layanan_id (nama_layanan),
-            mandor:mandor_id (nama)
-        `)
-        .not('jadwal_survey', 'is', null)
-        .order('jadwal_survey', { ascending: true });
-
-    if (error) {
-        console.error('Error fetching schedules from orders:', error);
-        return [];
-    }
-
-    return (data || []).map(mapOrderToSchedule);
-};
-
-// GET all orders as schedules (including those without jadwal_survey)
-export const getAllOrdersAsSchedules = async (): Promise<Schedule[]> => {
-    const { data, error } = await supabase
-        .from('orders')
-        .select(`
-            *,
-            layanan:layanan_id (nama_layanan),
-            mandor:mandor_id (nama)
-        `)
-        .order('tanggal_pesan', { ascending: false });
-
-    if (error) {
-        console.error('Error fetching orders as schedules:', error);
-        return [];
-    }
-
-    return (data || []).map(mapOrderToSchedule);
-};
-
-// GET schedules by date
-export const getSchedulesByDate = async (date: string): Promise<Schedule[]> => {
-    // Filter by date portion of jadwal_survey
-    const startOfDay = `${date}T00:00:00`;
-    const endOfDay = `${date}T23:59:59`;
-
-    const { data, error } = await supabase
-        .from('orders')
-        .select(`
-            *,
-            layanan:layanan_id (nama_layanan),
-            mandor:mandor_id (nama)
-        `)
-        .gte('jadwal_survey', startOfDay)
-        .lte('jadwal_survey', endOfDay)
-        .order('jam_survey', { ascending: true });
-
-    if (error) {
-        console.error('Error fetching schedules by date:', error);
-        return [];
-    }
-
-    return (data || []).map(mapOrderToSchedule);
-};
-
-// GET schedules by mandor
-export const getSchedulesByMandor = async (mandorId: number): Promise<Schedule[]> => {
-    const { data, error } = await supabase
-        .from('orders')
-        .select(`
-            *,
-            layanan:layanan_id (nama_layanan),
-            mandor:mandor_id (nama)
-        `)
-        .eq('mandor_id', mandorId)
-        .not('jadwal_survey', 'is', null)
-        .order('jadwal_survey', { ascending: true });
-
-    if (error) {
-        console.error('Error fetching schedules by mandor:', error);
-        return [];
-    }
-
-    return (data || []).map(mapOrderToSchedule);
-};
-
-// UPDATE schedule (updates the order)
-export const updateSchedule = async (id: string, updates: Partial<Schedule>): Promise<Schedule | null> => {
-    const updateData: Record<string, any> = {};
-
-    if (updates.customerName !== undefined) updateData.customer_name = updates.customerName;
-    if (updates.address !== undefined) updateData.alamat_proyek = updates.address;
-    if (updates.notes !== undefined) updateData.deskripsi = updates.notes;
-    if (updates.mandorId !== undefined) updateData.mandor_id = updates.mandorId;
-    if (updates.time !== undefined) updateData.jam_survey = updates.time;
-
-    // Map schedule status back to order status using helper
-    if (updates.status !== undefined) {
-        updateData.status_pesanan = mapStatusToDb(updates.status);
-    }
-
-    // Handle date update
-    if (updates.date !== undefined) {
-        updateData.jadwal_survey = new Date(updates.date).toISOString();
-    }
-
-    const { data, error } = await supabase
-        .from('orders')
-        .update(updateData)
-        .eq('pesanan_id', parseInt(id))
-        .select(`
-            *,
-            layanan:layanan_id (nama_layanan),
-            mandor:mandor_id (nama)
-        `)
-        .single();
-
-    if (error) {
-        console.error('Error updating schedule:', error);
-        return null;
-    }
-
-    return data ? mapOrderToSchedule(data) : null;
-};
-
-// CREATE schedule is actually creating an order (not typically done from schedule view)
-// For manual schedule creation, we'd create an order
-export const createSchedule = async (schedule: Omit<Schedule, 'id'>): Promise<Schedule | null> => {
-    const { data, error } = await supabase
-        .from('orders')
-        .insert({
-            customer_name: schedule.customerName,
-            tipe_pesanan: 'Manual',
-            deskripsi: schedule.notes || schedule.service,
-            alamat_proyek: schedule.address,
-            jadwal_survey: schedule.date ? new Date(schedule.date).toISOString() : null,
-            jam_survey: schedule.time,
-            status_pesanan: 'ON_PROGRESS',
-            mandor_id: schedule.mandorId || null,
-            tanggal_pesan: new Date().toISOString(),
-        })
-        .select(`
-            *,
-            layanan:layanan_id (nama_layanan),
-            mandor:mandor_id (nama)
-        `)
-        .single();
-
-    if (error) {
-        console.error('Error creating schedule:', error);
-        return null;
-    }
-
-    return data ? mapOrderToSchedule(data) : null;
-};
-
-// DELETE schedule (deletes the order - use with caution)
-export const deleteSchedule = async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-        .from('orders')
-        .delete()
-        .eq('pesanan_id', parseInt(id));
-
-    if (error) {
-        console.error('Error deleting schedule:', error);
-        return false;
-    }
-
-    return true;
-};
-
-// Export as service object
-export const scheduleService = {
-    getAll: getSchedules,
-    getAllOrders: getAllOrdersAsSchedules,
-    getByDate: getSchedulesByDate,
-    getByMandor: getSchedulesByMandor,
-    create: createSchedule,
-    update: updateSchedule,
-    delete: deleteSchedule,
-};
+}

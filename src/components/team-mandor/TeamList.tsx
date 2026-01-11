@@ -14,9 +14,10 @@ export interface TeamMember {
     name: string;
     role: string;
     phone: string;
-    skill: string;
+    specialty?: string;
+    keahlian?: string;
     rating: number;
-    experience?: string;
+    domisili?: string;
     bio?: string;
     image?: string;
 }
@@ -79,12 +80,12 @@ export const TeamList: React.FC = () => {
                 name: memberData.name || '',
                 role: memberData.role || 'Umum',
                 phone: memberData.phone || '',
-                skill: memberData.skill || 'Intermediate',
-                experience: memberData.experience || '1 Tahun',
+                domisili: memberData.domisili || 'Jakarta',
                 bio: memberData.bio || '',
                 rating: 0,
+                keahlian: memberData.keahlian
             }, MANDOR_ID);
-            
+
             if (newMember) {
                 setTeam(prev => [...prev, newMember]);
             }
@@ -181,7 +182,15 @@ export const TeamList: React.FC = () => {
                                         <div className="p-2 bg-white rounded-xl shadow-sm border border-gray-100">
                                             <Phone className="w-4 h-4 text-gray-400" />
                                         </div>
-                                        <span className="font-bold text-gray-600 text-sm">{member.phone}</span>
+                                        <a
+                                            href={`https://wa.me/${member.phone.replace(/^0/, '62').replace(/\D/g, '')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm font-bold text-gray-600 hover:text-green-600 hover:underline transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {member.phone}
+                                        </a>
                                     </div>
                                 </div>
 
@@ -191,15 +200,14 @@ export const TeamList: React.FC = () => {
                                         <span className="font-black text-yellow-700">{member.rating}</span>
                                     </div>
                                     <div className="flex-1 flex items-center justify-center gap-2 bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100 text-gray-500 font-bold text-xs uppercase tracking-wider">
-                                        {member.skill === 'Expert' && <Shield className="w-4 h-4 text-blue-600 fill-blue-600" />}
-                                        {member.skill}
+                                        <MapPin className="w-4 h-4 text-blue-600 fill-blue-600" />
+                                        {member.domisili}
                                     </div>
                                 </div>
 
-                                {member.experience && (
+                                {member.bio && (
                                     <div className="px-4 py-2 bg-gray-50/50 rounded-xl text-center">
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Pengalaman</p>
-                                        <p className="font-bold text-gray-700 text-sm">{member.experience}</p>
+                                        <p className="font-medium text-gray-500 text-xs line-clamp-2">{member.bio}</p>
                                     </div>
                                 )}
                             </div>

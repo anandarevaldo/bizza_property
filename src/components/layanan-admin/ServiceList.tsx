@@ -1,8 +1,10 @@
 
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, X, Briefcase, ChevronRight } from 'lucide-react';
 import { ServiceEditModal } from './ServiceEditModal';
-import { serviceTypes } from '../Layanan/RepairServiceSelection/constants';
+import { ICON_MAP } from '@/lib/constants/serviceTemplates';
 import { layananService, ServiceData } from '../../lib/services/layananService';
 
 // Re-export type if needed or use from service
@@ -78,6 +80,8 @@ export const ServiceList: React.FC = () => {
         }
     };
 
+    const uniqueCategories = Array.from(new Set(services.map(s => s.category))).filter((cat): cat is string => Boolean(cat));
+
     const filteredServices = services.filter(service =>
         service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         service.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -144,12 +148,11 @@ export const ServiceList: React.FC = () => {
                         ) : (
                             filteredServices.map((service) => {
                                 // Find icon from saved name OR fallback to constant list lookup OR default
+                                // Use saved icon name to look up in ICON_MAP
                                 const savedIconName = service.icon;
-                                const matchedServiceType = serviceTypes.find(s => s.name === savedIconName);
-                                // If saved icon exists, use it. If not, try to find by name matching. Fallback to Briefcase.
-                                const Icon = matchedServiceType?.icon || serviceTypes.find(s => s.name === service.name)?.icon || Briefcase;
-                                const iconBg = matchedServiceType?.bg || 'bg-gray-50';
-                                const iconColor = matchedServiceType?.color || 'text-gray-600';
+                                const Icon = (savedIconName && ICON_MAP[savedIconName]) || Briefcase;
+                                const iconBg = service.bg_gradient?.split(' ')[0] || 'bg-gray-50';
+                                const iconColor = service.color_class || 'text-gray-600';
 
                                 return (
                                     <tr
@@ -213,6 +216,7 @@ export const ServiceList: React.FC = () => {
                 onClose={() => setIsModalOpen(false)}
                 service={currentService}
                 onSave={handleSave}
+                availableCategories={uniqueCategories}
             />
         </div>
     );

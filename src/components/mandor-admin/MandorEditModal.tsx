@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ChevronRight, CheckCircle2, User, Hammer, MapPin, Phone, StickyNote, Activity, ChevronDown, HardHat, Users, Star } from 'lucide-react';
 import { Mandor } from '../dashboard-admin/types';
 import { serviceTypes } from '../Layanan/RepairServiceSelection/constants';
-import { initialTeam, TeamMember } from '../team-mandor/TeamList';
+import { TeamMember } from '../team-mandor/TeamList';
 
 interface MandorEditModalProps {
     isOpen: boolean;
@@ -172,58 +172,23 @@ export const MandorEditModal: React.FC<MandorEditModalProps> = ({ isOpen, onClos
                         </div>
                     </div>
 
-                    {/* Team Members Section (New) */}
-                    <div className="bg-blue-50/50 rounded-3xl p-6 border border-blue-100 space-y-5">
-                        <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                            <Users className="w-5 h-5 text-blue-600" /> Anggota Tim
-                        </h4>
-
-                        {/* Mock Team Display - In real app this would fetch team by Mandor ID */}
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between mb-2">
-                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Daftar Anggota ({initialTeam.length})</p>
-                                <button type="button" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline">
-                                    Kelola Tim via Dashboard
-                                </button>
+                    {/* Team Members Section (Info Only) */}
+                    <div className="bg-blue-50/50 rounded-3xl p-6 border border-blue-100 space-y-3">
+                        <div className="flex items-center gap-3">
+                             <div className="p-2 bg-blue-100 rounded-xl text-blue-600">
+                                <Users className="w-5 h-5" />
                             </div>
+                            <h4 className="font-bold text-gray-900">Anggota Tim</h4>
+                        </div>
+                        
+                        <p className="text-sm text-gray-500 font-medium leading-relaxed">
+                            Manajemen anggota tim dapat dilakukan secara terpisah melalui menu <strong>Data Mandor</strong> di dashboard utama. Anda dapat menambahkan atau menghapus anggota tim setelah data mandor tersimpan.
+                        </p>
 
-                            {initialTeam.length > 0 ? (
-                                initialTeam.map((member) => (
-                                    <div key={member.id} className="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm hover:shadow-md transition-all group">
-                                        <div className="flex items-start gap-4">
-                                            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xl shrink-0">
-                                                {member.name.charAt(0)}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="frex justify-between items-start">
-                                                    <div>
-                                                        <h5 className="font-bold text-gray-900 text-sm truncate">{member.name}</h5>
-                                                        <p className="text-xs text-blue-600 font-medium mb-1">{member.role}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 font-medium">
-                                                    <div className="flex items-center gap-1">
-                                                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                                                        <span className="text-gray-700 font-bold">{member.rating}</span>
-                                                    </div>
-                                                    <div className="w-1 h-1 rounded-full bg-gray-300"></div>
-                                                    <span>{member.skill}</span>
-                                                    <div className="w-1 h-1 rounded-full bg-gray-300"></div>
-                                                    <div className="flex items-center gap-1">
-                                                        <Phone className="w-3 h-3" />
-                                                        <span>{member.phone}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="text-center py-8 bg-blue-50/50 rounded-2xl border border-dashed border-blue-200">
-                                    <p className="text-sm text-gray-400 font-medium">Belum ada anggota tim.</p>
-                                </div>
-                            )}
+                        <div className="pt-2">
+                             <button type="button" className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1">
+                                Kelola Tim via Dashboard <ChevronRight className="w-3 h-3" />
+                            </button>
                         </div>
                     </div>
 

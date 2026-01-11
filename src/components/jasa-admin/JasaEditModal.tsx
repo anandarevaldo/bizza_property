@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronRight, CheckCircle2, Hammer, Calendar, DollarSign, AlignLeft, ChevronDown } from 'lucide-react';
 import { Jasa } from './JasaList';
-import { serviceTypes, categories } from '../Layanan/RepairServiceSelection/constants';
+import { useServices } from '@/hooks/useServices';
+import { CATEGORY_DISPLAY } from '@/lib/constants/serviceTemplates';
 
 interface JasaEditModalProps {
     isOpen: boolean;
@@ -13,6 +14,7 @@ interface JasaEditModalProps {
 
 export const JasaEditModal: React.FC<JasaEditModalProps> = ({ isOpen, onClose, jasa, onSave }) => {
     const [formData, setFormData] = useState<Partial<Jasa>>({});
+    const { services } = useServices();
 
     useEffect(() => {
         if (isOpen) {
@@ -79,19 +81,15 @@ export const JasaEditModal: React.FC<JasaEditModalProps> = ({ isOpen, onClose, j
                                     required
                                 >
                                     <option value="" disabled>Pilih Kategori Jasa</option>
-                                    {Object.entries(categories).map(([key, group]) => {
-                                        const groupServices = serviceTypes.filter(s => group.ids.includes(s.id));
-                                        if (groupServices.length === 0) return null;
-                                        return (
-                                            <optgroup key={key} label={group.title}>
-                                                {groupServices.map(service => (
-                                                    <option key={service.id} value={service.name}>
-                                                        {service.name}
-                                                    </option>
-                                                ))}
-                                            </optgroup>
-                                        );
-                                    })}
+                                    {Array.from(new Set(services.map(s => s.category || 'Lainnya'))).map(cat => (
+                                        <optgroup key={cat} label={CATEGORY_DISPLAY[cat] || cat}>
+                                            {services.filter(s => (s.category || 'Lainnya') === cat).map(service => (
+                                                <option key={service.id} value={service.name}>
+                                                    {service.name}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    ))}
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                             </div>

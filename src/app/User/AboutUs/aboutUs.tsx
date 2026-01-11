@@ -4,12 +4,14 @@ import React from 'react';
 import Navbar from '../../../components/navbar';
 import Footer from '../../../components/footer';
 import { Target, Eye, Heart, Shield, Users, Award, Clock, Zap, CheckCircle, Quote } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface AboutUsPageProps {
-    switchView: (view: any) => void;
+    // switchView?: (view: any) => void; // Removed as per instruction
 }
 
-const AboutUsPage: React.FC<AboutUsPageProps> = ({ switchView }) => {
+const AboutUsPage: React.FC<AboutUsPageProps> = () => { // switchView removed from destructuring
+    const router = useRouter();
     const coreValues = [
         { icon: Shield, title: 'Kepercayaan', description: 'Membangun hubungan jangka panjang berdasarkan integritas dan transparansi.', color: 'bg-blue-600' },
         { icon: Award, title: 'Kualitas', description: 'Standar tinggi dalam setiap proyek, tanpa kompromi.', color: 'bg-yellow-500' },
@@ -26,7 +28,7 @@ const AboutUsPage: React.FC<AboutUsPageProps> = ({ switchView }) => {
 
     return (
         <div className="min-h-screen bg-white font-sans animate-fade-in">
-            <Navbar switchView={switchView} currentView="about" />
+            <Navbar currentView="about" /> {/* switchView prop removed as it's no longer passed */}
 
             {/* Hero Section - Consistent with Home */}
             <section className="relative w-full h-[60vh] min-h-[500px] flex items-center justify-center">
@@ -278,7 +280,7 @@ const AboutUsPage: React.FC<AboutUsPageProps> = ({ switchView }) => {
                                 ))}
                             </div>
                             <button
-                                onClick={() => switchView('layanan')}
+                                onClick={() => router.push('/User/layanan')}
                                 className="mt-8 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-bold shadow-lg transition-all transform hover:scale-105"
                             >
                                 Lihat Layanan Kami
@@ -304,13 +306,13 @@ const AboutUsPage: React.FC<AboutUsPageProps> = ({ switchView }) => {
                     <p className="text-blue-200 mb-8 max-w-2xl mx-auto">Hubungi kami sekarang dan konsultasikan kebutuhan properti Anda dengan tim ahli kami.</p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button
-                            onClick={() => switchView('layanan')}
+                            onClick={() => router.push('/User/layanan')}
                             className="bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-8 py-4 rounded-full font-bold shadow-lg transition-all transform hover:scale-105"
                         >
                             Jelajahi Layanan
                         </button>
                         <button
-                            onClick={() => switchView('portfolio')}
+                            onClick={() => router.push('/User/portfolio')}
                             className="bg-white/10 hover:bg-white/20 text-white border border-white/30 px-8 py-4 rounded-full font-bold transition-all"
                         >
                             Lihat Portfolio

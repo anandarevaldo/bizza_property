@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { ServiceRepairBookingProps, PaymentMethod } from './types';
-import { paymentMethods, problemTypesMap } from './constants';
+import { problemTypesMap } from './constants';
 import { ProblemSelector } from './ProblemSelector';
 import { ConsultationBanner } from './ConsultationBanner';
 import { ProblemDescription } from './ProblemDescription';
@@ -10,6 +10,8 @@ import { AddressSelector } from '../FormRumah/AddressSelector';
 import { PhotoUpload } from './PhotoUpload';
 import { OrderSummary } from './OrderSummary';
 import { PaymentMethodModal } from './PaymentMethodModal';
+import { supabase } from '../../lib/supabaseClient';
+import { orderService } from '../../lib/services/orderService';
 
 // Shared Handyman Components
 import { HandymanList } from '../FormTukang/HandymanList';
@@ -34,9 +36,27 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
     // const [showAddress, setShowAddress] = useState(false); // Removed
 
     // Payment State
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>({
+        id: 'qris',
+        name: 'QRIS',
+        type: 'ewallet',
+        icon: '/images/qris.png'
+    });
+    const [paymentProof, setPaymentProof] = useState<File | null>(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [tempSelectedPayment, setTempSelectedPayment] = useState<PaymentMethod | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Photo Upload Handlers
+    const handleImagesChange = (newImages: File[]) => {
+        setImages((prevImages) => {
+            const combinedImages = [...prevImages, ...newImages];
+            return combinedImages.slice(0, 10);
+        });
+    };
+
+    const removeImage = (index: number) => {
+        setImages((prevImages) => prevImages.filter((_, i) => i !== index));
+    };
 
     // Logic: Smart Select Handyman based on Problem
     const handleSelectProblem = (problemId: string) => {
@@ -105,9 +125,9 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
         }
     };
 
-    const handleConfirmPaymentMethod = () => {
-        if (tempSelectedPayment) {
-            setSelectedPaymentMethod(tempSelectedPayment);
+    const handleConfirmPaymentMethod = (proofFile: File | null) => {
+        if (proofFile) {
+            setPaymentProof(proofFile);
             setShowPaymentModal(false);
         }
     };
@@ -118,7 +138,7 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
         window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!selectedProblem || selectedHandymen.length === 0) {
             alert("Mohon pilih masalah dan pastikan tukang terpilih.");
             return;
@@ -127,9 +147,53 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
             alert("Mohon isi alamat survey.");
             return;
         }
-        alert("Pesanan Perbaikan Berhasil Dikirim! (Simulasi)");
-        switchView('home');
-    }
+        if (!paymentProof) {
+            alert("Mohon upload bukti pembayaran QRIS terlebih dahulu.");
+            setShowPaymentModal(true);
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                alert("Anda harus login untuk membuat pesanan.");
+                return;
+            }
+
+            // Get problem title
+            const problems = selectedServiceType ? (problemTypesMap as any)[selectedServiceType] : [];
+            const problemTitle = selectedProblem ? (problems as any[]).find(p => p.id === selectedProblem)?.title : 'Unknown';
+
+            // Create Order
+            const order = await orderService.createOrder({
+                userId: user.id,
+                customerName: user.user_metadata?.full_name || 'Anonymous',
+                tipe_pesanan: 'Layanan',
+                propertyType: selectedServiceType || 'Unknown',
+                description: `Masalah: ${problemTitle}. Detail: ${description}`,
+                address: addressSearch + (addressDetails ? `, ${addressDetails}` : ''),
+                budget: finalTotal.toString(),
+                selectedDate: selectedDate?.toISOString() || new Date().toISOString(),
+                selectedTime: selectedTimeSlot || '',
+                paymentMethod: 'QRIS'
+            });
+
+            if (order) {
+                // Upload Proof
+                const proofUrl = await orderService.uploadOrderImage(paymentProof, order.pesanan_id.toString(), user.id);
+                await orderService.createDocumentation(order.pesanan_id, user.id, proofUrl, 'Bukti Pembayaran QRIS');
+
+                alert("Pesanan Perbaikan Berhasil Dikirim! Kami akan segera memverifikasi pembayaran Anda.");
+                switchView('home');
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Gagal membuat pesanan.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     // Pricing Logic (Dynamic based on selected handymen)
     const calculateTotal = () => {
@@ -230,11 +294,11 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
                         finalTotal={finalTotal}
                         selectedPaymentMethod={selectedPaymentMethod}
                         onSelectPaymentClick={() => {
-                            setTempSelectedPayment(selectedPaymentMethod);
                             setShowPaymentModal(true);
                         }}
                         onSubmit={handleSubmit}
                         formattedPrice={formattedPrice}
+                        isLoading={isLoading}
                     />
 
                 </div>
@@ -244,9 +308,6 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
             <PaymentMethodModal
                 isOpen={showPaymentModal}
                 onClose={() => setShowPaymentModal(false)}
-                paymentMethods={paymentMethods}
-                tempSelectedPayment={tempSelectedPayment}
-                onSelectTempPayment={setTempSelectedPayment}
                 onConfirmSelection={handleConfirmPaymentMethod}
                 formattedPrice={formattedPrice}
             />

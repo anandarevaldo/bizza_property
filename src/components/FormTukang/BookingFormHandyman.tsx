@@ -11,14 +11,8 @@ import { OrderSummary } from './OrderSummary';
 import { AddHandymanModal } from './AddHandymanModal';
 import { PaymentMethodModal } from './PaymentMethodModal';
 import { handymanTypes } from './handymanData';
-
-const paymentMethods: PaymentMethod[] = [
-    { id: 'gopay', name: 'GoPay', type: 'ewallet', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/gopay_logo_icon_169325.png', balance: 2500000 },
-    { id: 'ovo', name: 'OVO', type: 'ewallet', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/ovo_logo_icon_169328.png', balance: 150000 },
-    { id: 'dana', name: 'DANA', type: 'ewallet', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/dana_logo_icon_169327.png', balance: 50000 },
-    { id: 'bca', name: 'BCA Virtual Account', type: 'va', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/bca_logo_icon_169326.png', description: 'Cek otomatis' },
-    { id: 'mandiri', name: 'Mandiri Virtual Account', type: 'va', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/mandiri_logo_icon_169329.png', description: 'Cek otomatis' },
-];
+import { supabase } from '../../lib/supabaseClient';
+import { orderService } from '../../lib/services/orderService';
 
 const BookingFormHandyman: React.FC<BookingFormHandymanProps> = ({ switchView, selectedHandymanType: initialHandymanType, selectedMaterials = [], onUpdateMaterials }) => {
     // State
@@ -42,8 +36,14 @@ const BookingFormHandyman: React.FC<BookingFormHandymanProps> = ({ switchView, s
     const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     // Payment
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
-    const [tempSelectedPayment, setTempSelectedPayment] = useState<PaymentMethod | null>(null);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>({
+        id: 'qris',
+        name: 'QRIS',
+        type: 'ewallet',
+        icon: '/images/qris.png'
+    });
+    const [paymentProof, setPaymentProof] = useState<File | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Pricing
     const prices: Record<string, number> = {
@@ -81,16 +81,61 @@ const BookingFormHandyman: React.FC<BookingFormHandymanProps> = ({ switchView, s
         setShowAddHandymanModal(false);
     };
 
-    const handleConfirmPaymentMethod = () => {
-        if (tempSelectedPayment) {
-            setSelectedPaymentMethod(tempSelectedPayment);
+    const handleConfirmPaymentMethod = (proofFile: File | null) => {
+        if (proofFile) {
+            setPaymentProof(proofFile);
             setShowPaymentModal(false);
         }
     };
 
-    const handleSubmit = () => {
-        alert("Pesanan Tukang Berhasil! (Simulasi)");
-        switchView('home');
+    const handleSubmit = async () => {
+        if (!addressDetails) {
+            alert('Mohon isi alamat survey.');
+            return;
+        }
+
+        if (!paymentProof) {
+            alert('Mohon lakukan pembayaran dan upload bukti transfer terlebih dahulu.');
+            setShowPaymentModal(true);
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                alert("Anda harus login untuk membuat pesanan.");
+                return;
+            }
+
+            // Create Order
+            const order = await orderService.createOrder({
+                userId: user.id,
+                customerName: user.user_metadata?.full_name || 'Anonymous',
+                tipe_pesanan: 'Tukang',
+                propertyType: selectedHandymen.map(h => h.type).join(', '),
+                description: `Tukang: ${selectedHandymen.map(h => `${h.type} (${h.quantity})`).join(', ')}. Detail: ${description}`,
+                address: addressDetails,
+                budget: finalTotal.toString(),
+                selectedDate: selectedDate?.toISOString() || new Date().toISOString(),
+                selectedTime: selectedTimeSlot || '',
+                paymentMethod: 'QRIS'
+            });
+
+            if (order) {
+                // Upload Proof
+                const proofUrl = await orderService.uploadOrderImage(paymentProof, order.pesanan_id.toString(), user.id);
+                await orderService.createDocumentation(order.pesanan_id, user.id, proofUrl, 'Bukti Pembayaran QRIS');
+
+                alert("Pesanan Tukang Berhasil! Kami akan segera memverifikasi pembayaran Anda.");
+                switchView('home');
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Gagal membuat pesanan.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleMonthChange = (direction: 'prev' | 'next') => {
@@ -178,11 +223,11 @@ const BookingFormHandyman: React.FC<BookingFormHandymanProps> = ({ switchView, s
                         selectedMaterialsCount={selectedMaterials.length}
                         selectedPaymentMethod={selectedPaymentMethod}
                         onSelectPaymentClick={() => {
-                            setTempSelectedPayment(selectedPaymentMethod);
                             setShowPaymentModal(true);
                         }}
                         onSubmit={handleSubmit}
                         formattedPrice={formattedPrice}
+                        isLoading={isLoading}
                     />
                 </div>
             </div>
@@ -214,9 +259,6 @@ const BookingFormHandyman: React.FC<BookingFormHandymanProps> = ({ switchView, s
             <PaymentMethodModal
                 isOpen={showPaymentModal}
                 onClose={() => setShowPaymentModal(false)}
-                paymentMethods={paymentMethods}
-                tempSelectedPayment={tempSelectedPayment}
-                onSelectTempPayment={setTempSelectedPayment}
                 onConfirmSelection={handleConfirmPaymentMethod}
                 formattedPrice={formattedPrice}
             />

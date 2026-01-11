@@ -1,15 +1,19 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Mail, Lock, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 
 import { useRouter } from 'next/navigation'; // Add import
 
+import Link from 'next/link'; // Add import
+
 interface LoginFormProps {
-    switchView: (view: any) => void;
+    switchView?: (view: any) => void; // Deprecated
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
-    const router = useRouter(); // Initialize router
+    const router = useRouter();
     const [isLogin, setIsLogin] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
@@ -20,10 +24,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
 
         // Restore Mock Logins for Admin/Mandor
         if (email === 'admin@bizza.com' && password === 'admin123') {
-            router.push('/Admin/Dashboard'); // Use router
+            router.push('/Admin/Dashboard');
             return;
         } else if (email === 'mandor@bizza.com' && password === 'mandor123') {
-            router.push('/Mandor/Dashboard'); // Assuming Mandor also needs routing
+            router.push('/Mandor/Dashboard');
             return;
         }
 
@@ -34,7 +38,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
             });
 
             if (error) {
-                alert(error.message); // Keep error alert for now or use better UI
+                alert(error.message);
                 return;
             }
 
@@ -47,7 +51,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
                 } else if (role === 'MANDOR') {
                     router.push('/Mandor/Dashboard');
                 } else {
-                    switchView('home');
+                    router.push('/');
                 }
             }
 
@@ -60,23 +64,23 @@ const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
     return (
         <div className="w-full lg:w-1/2 bg-white flex flex-col justify-center py-12 px-6 lg:px-20 xl:px-24">
             <div className="w-full max-w-md mx-auto">
-                <button
-                    onClick={() => switchView('home')}
+                <Link
+                    href="/"
                     className="flex items-center text-gray-500 hover:text-blue-600 transition-colors mb-8 group font-medium"
                 >
                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3 group-hover:bg-blue-50 transition-colors">
                         <ArrowLeft className="w-4 h-4" />
                     </div>
                     Kembali ke Beranda
-                </button>
+                </Link>
 
                 <div className="mb-10">
                     <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Selamat Datang Kembali!</h2>
                     <p className="text-gray-500">
                         Belum punya akun?{' '}
-                        <button onClick={() => switchView('register')} className="text-blue-600 font-semibold hover:text-blue-700 hover:underline">
+                        <Link href="/auth/register" className="text-blue-600 font-semibold hover:text-blue-700 hover:underline">
                             Daftar Gratis
-                        </button>
+                        </Link>
                     </p>
                 </div>
 

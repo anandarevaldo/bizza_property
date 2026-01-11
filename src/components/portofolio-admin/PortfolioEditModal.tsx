@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Upload, Image as ImageIcon, Trash2, CheckCircle2, Save, Calendar, FolderOpen, AlignLeft, ChevronDown } from 'lucide-react';
 import { PortfolioItem } from './PortfolioList';
-import { categories, serviceTypes } from '../Layanan/RepairServiceSelection/constants';
+import { useServices } from '@/hooks/useServices';
+import { CATEGORY_DISPLAY } from '@/lib/constants/serviceTemplates';
 
 interface PortfolioEditModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ interface PortfolioEditModalProps {
 
 export const PortfolioEditModal: React.FC<PortfolioEditModalProps> = ({ isOpen, onClose, portfolio, onSave }) => {
     const [formData, setFormData] = useState<Partial<PortfolioItem>>({ images: [] });
+    const { services } = useServices();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -54,8 +56,6 @@ export const PortfolioEditModal: React.FC<PortfolioEditModalProps> = ({ isOpen, 
         onClose();
     };
 
-    // Extract categories for dropdown
-    const categoryOptions = Object.values(categories).map(c => c.title);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
@@ -143,19 +143,15 @@ export const PortfolioEditModal: React.FC<PortfolioEditModalProps> = ({ isOpen, 
                                             required
                                         >
                                             <option value="" disabled>Pilih Jenis Layanan</option>
-                                            {Object.entries(categories).map(([key, group]) => {
-                                                const groupServices = serviceTypes.filter(s => group.ids.includes(s.id));
-                                                if (groupServices.length === 0) return null;
-                                                return (
-                                                    <optgroup key={key} label={group.title}>
-                                                        {groupServices.map(service => (
-                                                            <option key={service.id} value={service.name}>
-                                                                {service.name}
-                                                            </option>
-                                                        ))}
-                                                    </optgroup>
-                                                );
-                                            })}
+                                            {Array.from(new Set(services.map(s => s.category || 'Lainnya'))).map(cat => (
+                                                <optgroup key={cat} label={CATEGORY_DISPLAY[cat] || cat}>
+                                                    {services.filter(s => (s.category || 'Lainnya') === cat).map(service => (
+                                                        <option key={service.id} value={service.name}>
+                                                            {service.name}
+                                                        </option>
+                                                    ))}
+                                                </optgroup>
+                                            ))}
                                         </select>
                                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                                     </div>

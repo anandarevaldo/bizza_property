@@ -10,14 +10,8 @@ import { ScheduleSelector } from './ScheduleSelector';
 import { BudgetSelector } from './BudgetSelector';
 import { OrderSummary } from './OrderSummary';
 import { PaymentMethodModal } from './PaymentMethodModal';
-
-const paymentMethods: PaymentMethod[] = [
-    { id: 'gopay', name: 'GoPay', type: 'ewallet', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/gopay_logo_icon_169325.png', balance: 2500000 },
-    { id: 'ovo', name: 'OVO', type: 'ewallet', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/ovo_logo_icon_169328.png', balance: 150000 },
-    { id: 'dana', name: 'DANA', type: 'ewallet', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/dana_logo_icon_169327.png', balance: 50000 },
-    { id: 'bca', name: 'BCA Virtual Account', type: 'va', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/bca_logo_icon_169326.png', description: 'Cek otomatis' },
-    { id: 'mandiri', name: 'Mandiri Virtual Account', type: 'va', icon: 'https://cdn.icon-icons.com/icons2/2699/PNG/512/mandiri_logo_icon_169329.png', description: 'Cek otomatis' },
-];
+import { supabase } from '../../lib/supabaseClient';
+import { orderService } from '../../lib/services/orderService';
 
 const BookingFormBusiness: React.FC<BookingFormBusinessProps> = ({ switchView }) => {
     // State Management
@@ -38,45 +32,87 @@ const BookingFormBusiness: React.FC<BookingFormBusinessProps> = ({ switchView })
     const [images, setImages] = useState<File[]>([]);
 
     // Payment Logic
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>({
+        id: 'qris',
+        name: 'QRIS',
+        type: 'ewallet',
+        icon: '/images/qris.png'
+    });
+    const [paymentProof, setPaymentProof] = useState<File | null>(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [tempSelectedPayment, setTempSelectedPayment] = useState<PaymentMethod | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleConfirmPaymentMethod = () => {
-        if (tempSelectedPayment) {
-            setSelectedPaymentMethod(tempSelectedPayment);
+    const handleConfirmPaymentMethod = (proofFile: File | null) => {
+        if (proofFile) {
+            setPaymentProof(proofFile);
             setShowPaymentModal(false);
         }
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!businessName || !picName || !description || !addressSearch || !selectedDate || !selectedTime || !budget) {
             alert('Mohon lengkapi semua data wajib (*) sebelum melanjutkan.');
             return;
         }
-        if (!selectedPaymentMethod) {
-            alert('Mohon pilih metode pembayaran.');
+        if (!paymentProof) {
+            alert('Mohon lakukan pembayaran dan upload bukti transfer terlebih dahulu.');
+            setShowPaymentModal(true);
             return;
         }
 
-        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        try {
+            setIsLoading(true);
 
-        const formData = {
-            businessType,
-            businessName,
-            picName,
-            description,
-            address: { search: addressSearch, detail: addressDetail },
-            date: selectedDate ? `${selectedDate.getDate()} ${monthNames[selectedDate.getMonth()]} ${selectedDate.getFullYear()}` : null,
-            time: selectedTime,
-            budget,
-            paymentMethod: selectedPaymentMethod.name
-        };
+            // 1. Get Current User
+            const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        console.log('Business Form Data:', formData);
-        alert('Pesanan Bisnis berhasil dibuat! (Simulasi)');
-        switchView('home');
-        switchView('home');
+            if (authError || !user) {
+                alert('Anda harus login terlebih dahulu untuk membuat pesanan.');
+                return;
+            }
+
+            // 2. Prepare Data
+            const fullAddress = `${addressSearch}, ${addressDetail}`;
+
+            // 3. Create Order
+            const order = await orderService.createOrder({
+                userId: user.id,
+                customerName: user.user_metadata?.full_name || 'Anonymous',
+                tipe_pesanan: 'Bisnis',
+                propertyType: `Bisnis: ${businessType} (${businessName})`,
+                description: `PIC: ${picName}. Detail: ${description}`,
+                address: fullAddress,
+                budget,
+                selectedDate: selectedDate ? selectedDate.toISOString() : new Date().toISOString(),
+                selectedTime: selectedTime || '',
+                paymentMethod: 'QRIS'
+            });
+
+            if (!order) throw new Error('Gagal membuat pesanan.');
+
+            // 4. Upload Problem Images
+            for (const image of images) {
+                if (image.size > 0) {
+                    const publicUrl = await orderService.uploadOrderImage(image, order.pesanan_id.toString(), user.id);
+                    await orderService.createDocumentation(order.pesanan_id, user.id, publicUrl);
+                }
+            }
+
+            // 5. Upload Payment Proof
+            if (paymentProof) {
+                const proofUrl = await orderService.uploadOrderImage(paymentProof, order.pesanan_id.toString(), user.id);
+                await orderService.createDocumentation(order.pesanan_id, user.id, proofUrl, 'Bukti Pembayaran QRIS');
+            }
+
+            alert('Pesanan Bisnis berhasil dibuat! Kami akan segera memverifikasi pembayaran Anda.');
+            switchView('home');
+
+        } catch (error: any) {
+            console.error('Submission error:', error);
+            alert(`Gagal membuat pesanan: ${error.message}`);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleRequestSurvey = () => {
@@ -191,12 +227,12 @@ const BookingFormBusiness: React.FC<BookingFormBusinessProps> = ({ switchView })
                         finalTotal={finalTotal}
                         selectedPaymentMethod={selectedPaymentMethod}
                         onSelectPaymentClick={() => {
-                            setTempSelectedPayment(selectedPaymentMethod);
                             setShowPaymentModal(true);
                         }}
                         onSubmit={handleSubmit}
                         onRequestSurvey={handleRequestSurvey}
                         formattedPrice={formattedPrice}
+                        isLoading={isLoading}
                     />
                 </div>
             </div>
@@ -204,9 +240,6 @@ const BookingFormBusiness: React.FC<BookingFormBusinessProps> = ({ switchView })
             <PaymentMethodModal
                 isOpen={showPaymentModal}
                 onClose={() => setShowPaymentModal(false)}
-                paymentMethods={paymentMethods}
-                tempSelectedPayment={tempSelectedPayment}
-                onSelectTempPayment={setTempSelectedPayment}
                 onConfirmSelection={handleConfirmPaymentMethod}
                 formattedPrice={formattedPrice}
             />

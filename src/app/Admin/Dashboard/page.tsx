@@ -1,8 +1,6 @@
 import React from 'react';
-import DashboardAdmin from '../../../components/dashboard-admin/Dashboard';
+import { DashboardOverview } from '../../../components/dashboard-admin/DashboardOverview';
 
-const DashboardPage = () => {
-    return <DashboardAdmin />;
-};
-
-export default DashboardPage;
+export default function DashboardPage() {
+    return <DashboardOverview />;
+}

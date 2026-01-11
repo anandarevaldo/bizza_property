@@ -5,119 +5,30 @@ import { SearchX, ArrowRight, MapPin } from 'lucide-react';
 
 export interface Project {
     id: number;
-    category: 'Renovasi' | 'Service AC' | 'Electrical' | 'Pengecatan' | 'Plumbing';
+    category: string;
     title: string;
     description: string;
     location: string;
     image: string;
+    galleryImages: string[];
     badgeColor: string;
 }
 
-export const PROJECTS: Project[] = [
-    {
-        id: 1,
-        category: 'Renovasi',
-        title: 'Renovasi Tembok',
-        location: 'Tukad Balian, Denpasar, Bali',
-        description: 'Pengerjaan 1 Bulan. Renovasi total tembok pembatas dengan finishing batu alam.',
-        image: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=2070&auto=format&fit=crop',
-        badgeColor: 'bg-blue-600'
-    },
-    {
-        id: 2,
-        category: 'Electrical',
-        title: 'Instalasi Kelistrikan',
-        location: 'Renon, Denpasar, Bali',
-        description: 'Pengerjaan 3 hari, 15 titik lampu. Instalasi baru untuk ruko 2 lantai.',
-        image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=2069&auto=format&fit=crop',
-        badgeColor: 'bg-yellow-500 text-blue-900'
-    },
-    {
-        id: 3,
-        category: 'Plumbing', // Corrected from Pengecatan/Plumbing ambiguity
-        title: 'Perbaikan Pipa Bocor',
-        location: 'Jimbaran, Badung, Bali',
-        description: 'Pengerjaan 4 jam, garansi 1 bulan. Penanganan kebocoran pipa tanam.',
-        image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?q=80&w=2070&auto=format&fit=crop',
-        badgeColor: 'bg-purple-600'
-    },
-    {
-        id: 4,
-        category: 'Service AC',
-        title: 'Instalasi Air Conditioner',
-        location: 'Sanur, Denpasar, Bali',
-        description: 'Pengerjaan 2 Unit, Daikin 1PK Inverter. Pemasangan rapi dan vacum.',
-        image: 'https://images.unsplash.com/photo-1574359611100-c081e64c3c26?q=80&w=1854&auto=format&fit=crop',
-        badgeColor: 'bg-cyan-500'
-    },
-    {
-        id: 5,
-        category: 'Renovasi',
-        title: 'Bongkar Tembok Open Space',
-        location: 'Tukad Balian, Denpasar',
-        description: 'Pembongkaran tembok untuk perluasan ruang keluarga modern.',
-        image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=2070&auto=format&fit=crop',
-        badgeColor: 'bg-rose-600'
-    },
-    {
-        id: 6,
-        category: 'Electrical',
-        title: 'Instalasi Smart Home',
-        location: 'Renon, Denpasar',
-        description: 'Integrasi sistem kelistrikan pintar dengan kontrol suara.',
-        image: 'https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?q=80&w=2070&auto=format&fit=crop',
-        badgeColor: 'bg-yellow-500 text-blue-900'
-    },
-    {
-        id: 7,
-        category: 'Plumbing',
-        title: 'Perbaikan Pipa Dapur',
-        location: 'Jimbaran, Badung',
-        description: 'Penanganan kebocoran pipa sink dapur dengan material anti-karat.',
-        image: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?q=80&w=2070&auto=format&fit=crop',
-        badgeColor: 'bg-blue-600'
-    },
-    {
-        id: 8,
-        category: 'Service AC',
-        title: 'Instalasi AC Split 2PK',
-        location: 'Sanur, Denpasar',
-        description: 'Pemasangan unit AC baru dengan jalur pipa tanam estetis.',
-        image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=2069&auto=format&fit=crop',
-        badgeColor: 'bg-cyan-500'
-    },
-    {
-        id: 9,
-        category: 'Renovasi',
-        title: 'Renovasi Atap',
-        location: 'Dalung, Kuta Utara',
-        description: 'Restorasi struktur atap dan penggantian genteng keramik.',
-        image: 'https://images.unsplash.com/photo-1632759145351-1d592919f522?q=80&w=2070&auto=format&fit=crop',
-        badgeColor: 'bg-rose-600'
-    },
-    {
-        id: 10,
-        category: 'Service AC',
-        title: 'Cuci AC Berkala',
-        location: 'Panjer, Denpasar',
-        description: 'Deep cleaning unit indoor dan outdoor untuk kualitas udara.',
-        image: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?q=80&w=2069&auto=format&fit=crop',
-        badgeColor: 'bg-cyan-500'
-    }
-];
-
 export const CATEGORIES = ['Semua', 'Renovasi', 'Service AC', 'Electrical', 'Pengecatan', 'Plumbing'];
 
+import Link from 'next/link';
+
 interface PortfolioGridProps {
-    onProjectClick?: (project: Project) => void;
+    onProjectClick?: (project: Project) => void; // Deprecated
+    projects: Project[];
 }
 
-const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectClick }) => {
+const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectClick, projects }) => {
     const [activeCategory, setActiveCategory] = useState('Semua');
 
     const filteredProjects = activeCategory === 'Semua'
-        ? PROJECTS
-        : PROJECTS.filter(project => project.category === activeCategory);
+        ? projects
+        : projects.filter(project => project.category === activeCategory);
 
     return (
         <div className="container mx-auto px-4 md:px-12 pb-32 pt-12">
@@ -141,10 +52,10 @@ const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectClick }) => {
             {filteredProjects.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredProjects.map((project) => (
-                        <div
+                        <Link
                             key={project.id}
-                            onClick={() => onProjectClick && onProjectClick(project)}
-                            className="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 h-[400px] cursor-pointer bg-gray-900 border border-gray-100"
+                            href={`/portfolio/${project.id}`}
+                            className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 h-[400px] cursor-pointer bg-gray-900 border border-gray-100"
                         >
                             {/* Background Image */}
                             <div
@@ -176,7 +87,7 @@ const PortfolioGrid: React.FC<PortfolioGridProps> = ({ onProjectClick }) => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             ) : (

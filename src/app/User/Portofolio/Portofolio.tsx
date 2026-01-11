@@ -11,14 +11,15 @@ import PortfolioTestimonials from '../../../components/Portfolio/PortfolioTestim
 interface PortofolioProps {
     switchView: (view: any) => void;
     onProjectClick: (project: Project) => void;
+    projects: Project[];
 }
 
-const Portofolio: React.FC<PortofolioProps> = ({ switchView, onProjectClick }) => {
+const Portofolio: React.FC<PortofolioProps> = ({ switchView, onProjectClick, projects }) => {
     return (
         <div className="min-h-screen bg-white font-sans animate-fade-in">
             <Navbar switchView={switchView} currentView="portfolio" />
             <PortfolioHero />
-            <PortfolioGrid onProjectClick={onProjectClick} />
+            <PortfolioGrid onProjectClick={onProjectClick} projects={projects} />
             <PortfolioTestimonials />
             <Footer />
         </div>

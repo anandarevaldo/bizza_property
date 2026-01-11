@@ -1,12 +1,18 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Phone } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 
+import Link from 'next/link'; // Add import
+import { useRouter } from 'next/navigation'; // Add import
+
 interface RegisterFormProps {
-    switchView: (view: any) => void;
+    switchView?: (view: any) => void; // Deprecated
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ switchView }) => {
+    const router = useRouter(); // Initialize router
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -52,7 +58,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ switchView }) => {
             // Check if session is established (auto sign-in) or email verification needed
             if (data.user) {
                 alert('Registrasi Berhasil! Silakan cek email Anda untuk verifikasi atau langsung login jika konfirmasi email dimatikan.');
-                switchView('login');
+                router.push('/auth/login');
             }
 
         } catch (err) {
@@ -64,23 +70,23 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ switchView }) => {
     return (
         <div className="w-full lg:w-1/2 bg-white flex flex-col justify-center py-12 px-6 lg:px-20 xl:px-24 overflow-y-auto h-screen">
             <div className="w-full max-w-md mx-auto">
-                <button
-                    onClick={() => switchView('home')}
+                <Link
+                    href="/"
                     className="flex items-center text-gray-500 hover:text-blue-600 transition-colors mb-8 group font-medium"
                 >
                     <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mr-3 group-hover:bg-blue-50 transition-colors">
                         <ArrowLeft className="w-4 h-4" />
                     </div>
                     Kembali ke Beranda
-                </button>
+                </Link>
 
                 <div className="mb-8">
                     <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Buat Akun Baru</h2>
                     <p className="text-gray-500">
                         Sudah punya akun?{' '}
-                        <button onClick={() => switchView('login')} className="text-blue-600 font-semibold hover:text-blue-700 hover:underline">
+                        <Link href="/auth/login" className="text-blue-600 font-semibold hover:text-blue-700 hover:underline">
                             Masuk disini
-                        </button>
+                        </Link>
                     </p>
                 </div>
 

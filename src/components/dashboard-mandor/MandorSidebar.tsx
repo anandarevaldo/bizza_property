@@ -1,21 +1,22 @@
 import React from 'react';
-import { LayoutGrid, FileText, Users, MessageSquare, LogOut, X, Calendar, ShoppingBag } from 'lucide-react';
+import { LayoutGrid, Users, LogOut, X, Calendar, ShoppingBag } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface MandorSidebarProps {
-    activeTab: string;
-    setActiveTab: (tab: string) => void;
     onLogout: () => void;
     isOpen: boolean;
     onClose: () => void;
 }
 
-const MandorSidebar: React.FC<MandorSidebarProps> = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }) => {
+const MandorSidebar: React.FC<MandorSidebarProps> = ({ onLogout, isOpen, onClose }) => {
+    const pathname = usePathname();
+
     const menuItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-        { id: 'jadwal', label: 'Jadwal & Detail', icon: Calendar },
-        { id: 'pemesanan', label: 'Pemesanan / Order', icon: ShoppingBag },
-        { id: 'rab', label: 'Kelola RAB', icon: FileText },
-        { id: 'tim', label: 'Tim Saya', icon: Users },
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid, href: '/Mandor/Dashboard' },
+        { id: 'jadwal', label: 'Jadwal & Detail', icon: Calendar, href: '/Mandor/Jadwal' },
+        { id: 'order', label: 'Pemesanan / Order', icon: ShoppingBag, href: '/Mandor/Order' },
+        { id: 'team', label: 'Tim Saya', icon: Users, href: '/Mandor/Team' },
     ];
 
     return (
@@ -59,14 +60,12 @@ const MandorSidebar: React.FC<MandorSidebarProps> = ({ activeTab, setActiveTab, 
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 ml-2">Main Menu</p>
                     <div className="space-y-2">
                         {menuItems.map((item) => {
-                            const isActive = activeTab === item.id;
+                            const isActive = pathname === item.href;
                             return (
-                                <button
+                                <Link
                                     key={item.id}
-                                    onClick={() => {
-                                        setActiveTab(item.id);
-                                        onClose();
-                                    }}
+                                    href={item.href}
+                                    onClick={onClose}
                                     className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-bold text-sm relative overflow-hidden group
                                         ${isActive
                                             ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 translate-x-2'
@@ -82,7 +81,7 @@ const MandorSidebar: React.FC<MandorSidebarProps> = ({ activeTab, setActiveTab, 
                                     {isActive && (
                                         <div className="absolute right-0 top-0 bottom-0 w-1 bg-white/20 blur-sm"></div>
                                     )}
-                                </button>
+                                </Link>
                             );
                         })}
                     </div>
@@ -105,3 +104,4 @@ const MandorSidebar: React.FC<MandorSidebarProps> = ({ activeTab, setActiveTab, 
 };
 
 export default MandorSidebar;
+

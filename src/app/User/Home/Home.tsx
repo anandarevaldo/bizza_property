@@ -9,25 +9,27 @@ import Workflow from '../../../components/Home/HomeWorkflow';
 import Review from '../../../components/Home/HomeReview';
 import Footer from '../../../components/footer';
 
+import { Project } from '../../../components/Portfolio/PortfolioGrid';
+
 interface HomeProps {
-    switchView: (view: any) => void;
     onProjectClick: (project: any) => void;
+    projects: Project[];
 }
 
-const Home: React.FC<HomeProps> = ({ switchView, onProjectClick }) => {
+const Home: React.FC<HomeProps> = ({ onProjectClick, projects }) => {
     const [activePortfolioCategory, setActivePortfolioCategory] = useState<string>('Semua');
 
     return (
         <main className="animate-fade-in">
-            <Navbar switchView={switchView} currentView="home" />
-            <Hero switchView={switchView} />
-            <ServiceSection switchView={switchView} />
+            <Navbar currentView="home" />
+            <Hero />
+            <ServiceSection />
             <Stats />
             <Portfolio
                 activePortfolioCategory={activePortfolioCategory}
                 setActivePortfolioCategory={setActivePortfolioCategory}
-                switchView={switchView}
                 onProjectClick={onProjectClick}
+                projects={projects}
             />
             <Workflow />
             <Review />

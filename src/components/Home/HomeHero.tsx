@@ -2,10 +2,10 @@ import React from 'react';
 import { Search, MapPin, Wrench } from 'lucide-react';
 
 interface HeroProps {
-    switchView: (view: 'home' | 'search' | 'login' | 'admin' | 'layanan' | 'portfolio' | 'about') => void;
+    // switchView removed
 }
 
-const Hero: React.FC<HeroProps> = ({ switchView }) => {
+const Hero: React.FC<HeroProps> = () => {
     return (
         <section className="relative w-full h-[60vh] min-h-[500px] flex items-center justify-center">
             {/* Background Image with Gradient Overlay */}

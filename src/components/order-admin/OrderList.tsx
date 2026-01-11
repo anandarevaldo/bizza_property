@@ -1,8 +1,12 @@
 'use client';
 
+'use client';
+
 import React, { useState } from 'react';
-import { Search, FileText, ChevronDown, CheckCircle, Clock, XCircle, Eye, X } from 'lucide-react';
+import { Search, FileText, ChevronDown, CheckCircle, Clock, XCircle, Eye, X, RefreshCcw } from 'lucide-react';
 import { OrderDetailModal } from './OrderDetailModal';
+import { orderService } from '@/lib/services/orderService';
+import { useEffect } from 'react';
 
 export interface Order {
     id: string;
@@ -14,18 +18,46 @@ export interface Order {
     status: 'Paid' | 'Unpaid' | 'Process' | 'Cancelled';
 }
 
-export const initialOrders: Order[] = [
-    { id: '1', orderNumber: 'ORD-2025-001', customer: 'Bapak Santoso', type: 'Layanan', total: 'Rp 450.000', date: '2025-12-28', status: 'Paid' },
-    { id: '2', orderNumber: 'ORD-2025-002', customer: 'Ibu Linda', type: 'Material', total: 'Rp 1.250.000', date: '2025-12-28', status: 'Process' },
-    { id: '3', orderNumber: 'ORD-2025-003', customer: 'Cafe Kopi Kita', type: 'Jasa', total: 'Rp 3.000.000', date: '2025-12-27', status: 'Unpaid' },
-];
+// export const initialOrders: Order[] = [
+//     { id: '1', orderNumber: 'ORD-2025-001', customer: 'Bapak Santoso', type: 'Layanan', total: 'Rp 450.000', date: '2025-12-28', status: 'Paid' },
+//     { id: '2', orderNumber: 'ORD-2025-002', customer: 'Ibu Linda', type: 'Material', total: 'Rp 1.250.000', date: '2025-12-28', status: 'Process' },
+//     { id: '3', orderNumber: 'ORD-2025-003', customer: 'Cafe Kopi Kita', type: 'Jasa', total: 'Rp 3.000.000', date: '2025-12-27', status: 'Unpaid' },
+// ];
 
 export const OrderList: React.FC = () => {
-    const [orders, setOrders] = useState<Order[]>(initialOrders);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [filterType, setFilterType] = useState<string>('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+    const fetchOrders = async () => {
+        try {
+            setIsLoading(true);
+            const data = await orderService.getAllOrders();
+            const formattedOrders: Order[] = (data || []).map((o: any) => ({
+                id: o.id,
+                orderNumber: `ORD-${new Date(o.tanggal_pesan).getFullYear()}-${o.pesanan_id?.toString().padStart(3, '0')}`,
+                customer: o.customer_name || 'Anonymous',
+                type: (o.tipe_pesanan === 'Rumah' || o.tipe_pesanan === 'Bisnis' || o.tipe_pesanan === 'Tukang') ? 'Jasa' : 'Layanan',
+                total: o.budget || 'Rp 0',
+                date: new Date(o.tanggal_pesan).toLocaleDateString('id-ID'),
+                status: o.status_pesanan === 'ON_PROGRESS' ? 'Process' : 
+                        o.status_pesanan === 'COMPLETED' ? 'Paid' : 
+                         o.status_pesanan === 'CANCELLED' ? 'Cancelled' : 'Unpaid'
+            }));
+            setOrders(formattedOrders);
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchOrders();
+    }, []);
 
     const filteredOrders = orders.filter(order =>
         (filterType === 'All' || order.type === filterType) &&
@@ -67,7 +99,14 @@ export const OrderList: React.FC = () => {
                 </div>
 
                 {/* Stats Mini Cards */}
-                <div className="flex gap-4">
+                <div className="flex gap-4 items-center">
+                    <button 
+                        onClick={fetchOrders}
+                        className="p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl text-gray-400 transition-colors"
+                        title="Refresh Data"
+                    >
+                        <RefreshCcw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+                    </button>
                     <div className="px-5 py-3 bg-emerald-50 rounded-2xl border border-emerald-100">
                         <p className="text-xs font-bold text-emerald-600 uppercase mb-1">Paid Orders</p>
                         <p className="text-2xl font-black text-emerald-700">{orders.filter(o => o.status === 'Paid').length}</p>

@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, User, Phone, MapPin, Trash2, Shield, Star, Users, Edit2, MessageSquare } from 'lucide-react';
-import { serviceTypes } from '../Layanan/RepairServiceSelection/constants';
+import { useServices } from '@/hooks/useServices';
+import { ICON_MAP } from '@/lib/constants/serviceTemplates';
 import { TeamMemberModal } from './TeamMemberModal';
 import { MemberReviewsModal } from './MemberReviewsModal';
+import { teamService } from '../../lib/services/teamService';
 
 // Exported for usage in Admin/MandorEditModal
 export interface TeamMember {
@@ -19,22 +21,33 @@ export interface TeamMember {
     image?: string;
 }
 
-
-export const initialTeam: TeamMember[] = [
-    { id: 1, name: 'Budi Santoso', role: 'Cat', phone: '081234567890', skill: 'Expert', rating: 4.8, experience: '7 Tahun', bio: 'Spesialis cat dekoratif dan tekstur.' },
-    { id: 2, name: 'Asep Supriyadi', role: 'Listrik', phone: '081987654321', skill: 'Intermediate', rating: 4.5, experience: '3 Tahun', bio: 'Ahli instalasi listrik rumahan.' },
-    { id: 3, name: 'Joko Widodo', role: 'Pipa', phone: '081298765432', skill: 'Expert', rating: 4.9, experience: '10 Tahun', bio: 'Mengatasi segala masalah kebocoran pipa.' },
-];
-
 export const TeamList: React.FC = () => {
-    const [team, setTeam] = useState<TeamMember[]>(initialTeam);
+    const [team, setTeam] = useState<TeamMember[]>([]);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+    const { services } = useServices();
+    const [loading, setLoading] = useState(true);
 
-    const handleDelete = (id: number) => {
+    const MANDOR_ID = 1; // Hardcoded for now, should come from auth context
+
+    useEffect(() => {
+        fetchMembers();
+    }, []);
+
+    const fetchMembers = async () => {
+        setLoading(true);
+        const data = await teamService.getMembers(MANDOR_ID);
+        setTeam(data);
+        setLoading(false);
+    };
+
+    const handleDelete = async (id: number) => {
         if (window.confirm('Hapus anggota ini dari tim?')) {
-            setTeam(team.filter(t => t.id !== id));
+            const success = await teamService.deleteMember(id);
+            if (success) {
+                setTeam(prev => prev.filter(t => t.id !== id));
+            }
         }
     };
 
@@ -53,26 +66,48 @@ export const TeamList: React.FC = () => {
         setIsReviewsModalOpen(true);
     };
 
-    const handleSaveMember = (memberData: Partial<TeamMember>) => {
+    const handleSaveMember = async (memberData: Partial<TeamMember>) => {
         if (selectedMember) {
             // Edit existing
-            setTeam(team.map(t => t.id === selectedMember.id ? { ...t, ...memberData } as TeamMember : t));
+            const updated = await teamService.updateMember(selectedMember.id, memberData);
+            if (updated) {
+                setTeam(prev => prev.map(t => t.id === selectedMember.id ? { ...t, ...memberData } as TeamMember : t));
+            }
         } else {
             // Add new
-            const newMember: TeamMember = {
-                ...memberData as TeamMember,
-                id: Math.random(),
-                rating: 0, // New member default rating
-            };
-            setTeam([...team, newMember]);
+            const newMember = await teamService.createMember({
+                name: memberData.name || '',
+                role: memberData.role || 'Umum',
+                phone: memberData.phone || '',
+                skill: memberData.skill || 'Intermediate',
+                experience: memberData.experience || '1 Tahun',
+                bio: memberData.bio || '',
+                rating: 0,
+            }, MANDOR_ID);
+            
+            if (newMember) {
+                setTeam(prev => [...prev, newMember]);
+            }
         }
         setIsEditModalOpen(false);
+        fetchMembers(); // Refresh to ensure data consistency
     };
 
     const getRoleStyle = (roleName: string) => {
-        const role = serviceTypes.find(s => s.name === roleName);
-        return role ? { bg: role.bg, color: role.color, icon: role.icon } : { bg: 'bg-gray-50', color: 'text-gray-600', icon: User };
+        const role = services.find(s => s.name === roleName);
+        if (role) {
+            return {
+                bg: role.bg_gradient?.split(' ')[0] || 'bg-blue-50',
+                color: role.color_class || 'text-blue-600',
+                icon: ICON_MAP[role.icon_name] || User
+            };
+        }
+        return { bg: 'bg-gray-50', color: 'text-gray-600', icon: User };
     };
+
+    if (loading) {
+        return <div className="p-10 text-center text-gray-500">Memuat data tim...</div>;
+    }
 
     return (
         <div className="space-y-12 animate-fade-in font-sans">

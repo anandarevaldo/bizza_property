@@ -9,6 +9,7 @@ interface OrderSummaryProps {
     onSelectPaymentClick: () => void;
     onSubmit: () => void;
     formattedPrice: (price: number) => string;
+    isLoading?: boolean;
 }
 
 export const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -18,6 +19,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
     onSelectPaymentClick,
     onSubmit,
     formattedPrice,
+    isLoading = false,
 }) => {
     return (
         <div className="lg:w-[420px] shrink-0">
@@ -64,9 +66,10 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
                 <button
                     onClick={onSubmit}
-                    className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 mt-6"
+                    disabled={isLoading}
+                    className={`w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 mt-6 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                    Bayar Sekarang
+                    {isLoading ? 'Memproses...' : 'Bayar Sekarang'}
                 </button>
             </div>
         </div>

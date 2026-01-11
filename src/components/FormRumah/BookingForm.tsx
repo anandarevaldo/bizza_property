@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronRight, Building } from 'lucide-react';
-import { BookingFormProps, PaymentMethod, paymentMethods } from './types';
+import { BookingFormProps, PaymentMethod } from './types';
 import { PropertyTypeSelector } from './PropertyTypeSelector';
 import { ProblemDescription } from './ProblemDescription';
 import { PhotoUpload } from './PhotoUpload';
@@ -30,9 +30,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
     const [images, setImages] = useState<File[]>([]);
 
     // Payment Logic
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>({
+        id: 'qris',
+        name: 'QRIS',
+        type: 'ewallet',
+        icon: '/images/qris.png'
+    });
+    const [paymentProof, setPaymentProof] = useState<File | null>(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [tempSelectedPayment, setTempSelectedPayment] = useState<PaymentMethod | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleImagesChange = (newImages: File[]) => {
@@ -55,9 +60,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
     };
 
-    const handleConfirmPaymentMethod = () => {
-        if (tempSelectedPayment) {
-            setSelectedPaymentMethod(tempSelectedPayment);
+    const handleConfirmPaymentMethod = (proofFile: File | null) => {
+        if (proofFile) {
+            setPaymentProof(proofFile);
             setShowPaymentModal(false);
         }
     };
@@ -67,8 +72,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
             alert('Mohon lengkapi semua data wajib (*) sebelum melanjutkan.');
             return;
         }
-        if (!selectedPaymentMethod) {
-            alert('Mohon pilih metode pembayaran.');
+        if (!paymentProof) {
+            alert('Mohon lakukan pembayaran dan upload bukti transfer terlebih dahulu.');
+            setShowPaymentModal(true);
             return;
         }
 
@@ -89,18 +95,20 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
             // 3. Create Order (Client Side)
             const order = await orderService.createOrder({
                 userId: user.id,
+                customerName: user.user_metadata?.full_name || 'Anonymous',
+                tipe_pesanan: 'Rumah',
                 propertyType,
                 description,
                 address: fullAddress,
                 budget,
                 selectedDate: selectedDate ? selectedDate.toISOString() : new Date().toISOString(),
                 selectedTime: selectedTime || '',
-                paymentMethod: selectedPaymentMethod.name
+                paymentMethod: 'QRIS'
             });
 
             if (!order) throw new Error('Gagal membuat pesanan.');
 
-            // 4. Upload Images (Client Side)
+            // 4. Upload Problem Images
             for (const image of images) {
                 if (image.size > 0) {
                     const publicUrl = await orderService.uploadOrderImage(image, order.pesanan_id.toString(), user.id);
@@ -108,7 +116,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
                 }
             }
 
-            alert('Pesanan berhasil dibuat!');
+            // 5. Upload Payment Proof
+            if (paymentProof) {
+                const proofUrl = await orderService.uploadOrderImage(paymentProof, order.pesanan_id.toString(), user.id);
+                await orderService.createDocumentation(order.pesanan_id, user.id, proofUrl, 'Bukti Pembayaran QRIS');
+            }
+
+            alert('Pesanan berhasil dibuat! Kami akan segera memverifikasi pembayaran Anda.');
             switchView('home');
 
         } catch (error: any) {
@@ -225,7 +239,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
                         finalTotal={finalTotal}
                         selectedPaymentMethod={selectedPaymentMethod}
                         onSelectPaymentClick={() => {
-                            setTempSelectedPayment(selectedPaymentMethod);
                             setShowPaymentModal(true);
                         }}
                         onSubmit={handleSubmit}
@@ -239,9 +252,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
             <PaymentMethodModal
                 isOpen={showPaymentModal}
                 onClose={() => setShowPaymentModal(false)}
-                paymentMethods={paymentMethods}
-                tempSelectedPayment={tempSelectedPayment}
-                onSelectTempPayment={setTempSelectedPayment}
                 onConfirmSelection={handleConfirmPaymentMethod}
                 formattedPrice={formattedPrice}
             />

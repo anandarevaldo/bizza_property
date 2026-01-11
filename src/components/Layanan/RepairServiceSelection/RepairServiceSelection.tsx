@@ -1,12 +1,29 @@
 import React, { useState } from 'react';
 import { ChevronRight, AlertCircle } from 'lucide-react';
-import { RepairServiceSelectionProps } from './types';
-import { serviceTypes } from './constants';
+import { RepairServiceSelectionProps, ServiceType } from './types';
 import { ServiceHero } from './ServiceHero';
 import { ServiceGrid } from './ServiceGrid';
 
-const RepairServiceSelection: React.FC<RepairServiceSelectionProps> = ({ switchView, onSelectService }) => {
+import { ICON_MAP } from '@/lib/constants/serviceTemplates';
+import { Wrench } from 'lucide-react';
+
+const RepairServiceSelection: React.FC<RepairServiceSelectionProps> = ({ switchView, onSelectService, services }) => {
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Mapping Database ServiceItem to Selection ServiceType
+    const mappedServices: ServiceType[] = services.map(s => {
+        const IconComponent = ICON_MAP[s.icon_name] || Wrench;
+        return {
+            id: s.id.toString(),
+            name: s.name,
+            desc: s.description,
+            icon: IconComponent,
+            icon_name: s.icon_name,
+            color: s.color_class,
+            bg: s.bg_gradient.includes(' ') ? s.bg_gradient.split(' ')[0] : s.bg_gradient, // Basic color from gradient
+            category: s.category
+        };
+    });
 
     const handleSelect = (name: string) => {
         onSelectService(name);
@@ -39,7 +56,7 @@ const RepairServiceSelection: React.FC<RepairServiceSelectionProps> = ({ switchV
                 {/* CONTENT AREA */}
                 <ServiceGrid
                     searchTerm={searchTerm}
-                    serviceTypes={serviceTypes}
+                    serviceTypes={mappedServices}
                     onSelectService={handleSelect}
                 />
             </div>

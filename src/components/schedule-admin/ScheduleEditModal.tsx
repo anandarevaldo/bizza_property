@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, MapPin, User, HardHat, CheckCircle2, X, ChevronDown } from 'lucide-react';
 import { initialMandors } from '../mandor-admin/MandorList';
 import { Mandor } from '../dashboard-admin/types';
-import { serviceTypes } from '../Layanan/RepairServiceSelection/constants';
+import { useServices } from '@/hooks/useServices';
 
 interface Schedule {
     id: string;
@@ -27,6 +27,7 @@ interface ScheduleEditModalProps {
 
 export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, onClose, schedule, selectedDate, onSave }) => {
     const [formData, setFormData] = useState<Partial<Schedule>>({});
+    const { services: dbServices } = useServices();
 
     useEffect(() => {
         if (isOpen) {
@@ -167,7 +168,7 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                                         required
                                     >
                                         <option value="" disabled>Pilih Keahlian</option>
-                                        {serviceTypes.map((service) => (
+                                        {dbServices.map((service) => (
                                             <option key={service.id} value={service.name}>
                                                 {service.name}
                                             </option>

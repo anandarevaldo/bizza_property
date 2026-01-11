@@ -1,5 +1,8 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, CheckCircle, XCircle, AlertCircle, ArrowRight, ChevronRight, Home, Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import Navbar from '../navbar';
 import Footer from '../footer';
 import { HistoryDetailModal } from './HistoryDetailModal';
@@ -20,7 +23,7 @@ interface HistoryItem {
 }
 
 interface HistoryPageProps {
-    switchView: (view: any) => void;
+    switchView?: (view: any) => void;
 }
 
 const mockHistory: HistoryItem[] = [
@@ -102,7 +105,8 @@ const mockHistory: HistoryItem[] = [
     }
 ];
 
-const HistoryPage: React.FC<HistoryPageProps> = ({ switchView }) => {
+const HistoryPage: React.FC<HistoryPageProps> = () => {
+    const router = useRouter();
     const [selectedItem, setSelectedItem] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     // Default to null (Show All History)
@@ -176,7 +180,7 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ switchView }) => {
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
-            <Navbar switchView={switchView} currentView="history" />
+            <Navbar currentView="history" />
 
             {/* Compact Admin-like Header with Background */}
             <div className="relative bg-gray-900 pt-32 pb-24 overflow-hidden">
@@ -318,9 +322,9 @@ const HistoryPage: React.FC<HistoryPageProps> = ({ switchView }) => {
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">Belum ada pesanan</h3>
                             <p className="text-gray-500 mb-6 font-medium">Yuk, mulai pesan jasa pertamamu sekarang!</p>
-                            <button onClick={() => switchView('layanan')} className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 hover:shadow-xl hover:-translate-y-1">
-                                Cari Jasa
-                            </button>
+                            <button onClick={() => router.push('/User/layanan')} className="bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-blue-700 transition-colors">
+                            Pesan Jasa
+                        </button>
                         </div>
                     )}
                 </div>

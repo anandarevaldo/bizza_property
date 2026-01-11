@@ -1,17 +1,20 @@
-import React from 'react';
-import { Project, PROJECTS, CATEGORIES } from '../Portfolio/PortfolioGrid';
+import { Project, CATEGORIES } from '../Portfolio/PortfolioGrid';
 import { ArrowRight } from 'lucide-react';
+
+import { useRouter } from 'next/navigation';
 
 interface PortfolioProps {
     activePortfolioCategory: string;
     setActivePortfolioCategory: (category: string) => void;
-    switchView: (view: any) => void;
+    // switchView removed
     onProjectClick: (project: Project) => void;
+    projects: Project[];
 }
 
-const Portfolio: React.FC<PortfolioProps> = ({ activePortfolioCategory, setActivePortfolioCategory, switchView, onProjectClick }) => {
+const Portfolio: React.FC<PortfolioProps> = ({ activePortfolioCategory, setActivePortfolioCategory, onProjectClick, projects }) => {
+    const router = useRouter();
     // Use first 4 items for the home page display to maintain the grid layout
-    const displayProjects = PROJECTS.slice(0, 4);
+    const displayProjects = projects.slice(0, 4);
 
     const filteredProjects = activePortfolioCategory === 'Semua'
         ? displayProjects
@@ -24,7 +27,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ activePortfolioCategory, setActiv
         <section className="py-16 bg-gray-50">
             <div className="container mx-auto px-4 md:px-12">
                 <div className="text-center mb-12">
-                    <h2 className="text-2xl md:text-3xl font-bold mb-2">Portfolio Proyek</h2>
+                    <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gray-500">Portfolio Proyek</h2>
                     <p className="text-gray-500">Lihat hasil kerja nyata dari mitra profesional kami</p>
                 </div>
 
@@ -55,7 +58,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ activePortfolioCategory, setActiv
                         return (
                             <div
                                 key={project.id}
-                                onClick={() => onProjectClick(project)}
+                                onClick={() => router.push(`/User/portfolio/${project.id}`)}
                                 className={`bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 text-left group cursor-pointer relative ${spanClasses}`}
                             >
                                 <img
@@ -88,7 +91,7 @@ const Portfolio: React.FC<PortfolioProps> = ({ activePortfolioCategory, setActiv
                 {/* View All Button */}
                 <div className="text-center">
                     <button
-                        onClick={() => switchView('portfolio')}
+                        onClick={() => router.push('/User/portfolio')}
                         className="px-8 py-3 bg-white border-2 border-[#1e3a8a] text-[#1e3a8a] rounded-full font-bold hover:bg-[#1e3a8a] hover:text-white transition-all shadow-md hover:shadow-xl flex items-center gap-2 mx-auto"
                     >
                         Lihat Seluruh Portfolio <ArrowRight className="w-4 h-4" />

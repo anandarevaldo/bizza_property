@@ -1,7 +1,6 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 import { ServiceType } from './types';
-import { categories } from './constants';
 import { ServiceCard } from './ServiceCard';
 
 interface ServiceGridProps {
@@ -19,11 +18,19 @@ export const ServiceGrid: React.FC<ServiceGridProps> = ({ searchTerm, serviceTyp
     const getGroupedServices = () => {
         if (searchTerm) return null;
 
-        return Object.entries(categories).map(([key, category]) => {
-            const items = serviceTypes.filter(h => category.ids.includes(h.id));
-            if (items.length === 0) return null;
-            return { ...category, items };
+        // Group by the category string from DB
+        const groups: { [key: string]: ServiceType[] } = {};
+        serviceTypes.forEach(s => {
+            const cat = s.category || 'Lainnya';
+            if (!groups[cat]) groups[cat] = [];
+            groups[cat].push(s);
         });
+
+        // Map to the expected format for rendering with display name support
+        return Object.entries(groups).map(([title, items]) => ({
+            title: title, // We could map this via CATEGORY_DISPLAY if we want, but keeping it simple for now
+            items
+        }));
     };
 
     const groupedData = getGroupedServices();

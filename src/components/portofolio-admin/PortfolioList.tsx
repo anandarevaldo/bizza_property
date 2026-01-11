@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Trash2, Image, ExternalLink, Edit2, Layers } from 'lucide-react';
 import { PortfolioEditModal } from './PortfolioEditModal';
+import { portfolioService } from '../../lib/services/portfolioService';
 
 export interface PortfolioItem {
     id: string;
@@ -13,21 +16,39 @@ export interface PortfolioItem {
     date: string;
 }
 
-const initialPortfolio: PortfolioItem[] = [
-    { id: '1', title: 'Renovasi Rumah Minimalis', description: 'Renovasi total rumah tipe 36 menjadi 2 lantai konsep minimalis.', category: '🏗️ Konstruksi & Renovasi Berat', images: ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=600'], date: '2025-10-15' },
-    { id: '2', title: 'Pemasangan Kanopi Carport', description: 'Instalasi kanopi baja ringan dengan atap alderon.', category: '🌳 Eksterior & Halaman', images: ['https://images.unsplash.com/photo-1623861282103-62d08a462319?auto=format&fit=crop&q=80&w=600'], date: '2025-11-02' },
-    { id: '3', title: 'Makeover Kamar Mandi', description: 'Ganti keramik dan instalasi sanitary baru.', category: '🏠 Interior & Finishing', images: ['https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?auto=format&fit=crop&q=80&w=600', 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&q=80&w=600'], date: '2025-12-01' },
-];
-
 export const PortfolioList: React.FC = () => {
-    const [items, setItems] = useState<PortfolioItem[]>(initialPortfolio);
+    const [items, setItems] = useState<PortfolioItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentItem, setCurrentItem] = useState<PortfolioItem | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const handleDelete = (id: string) => {
+    const fetchPortfolio = async () => {
+        setIsLoading(true);
+        try {
+            const data = await portfolioService.getAll();
+            setItems(data);
+        } catch (error) {
+            console.error('Error fetching portfolio:', error);
+            alert('Gagal mengambil data portofolio');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPortfolio();
+    }, []);
+
+    const handleDelete = async (id: string) => {
         if (window.confirm('Hapus portofolio ini?')) {
-            setItems(items.filter(i => i.id !== id));
+            try {
+                await portfolioService.delete(id);
+                setItems(items.filter(i => i.id !== id));
+            } catch (error) {
+                console.error('Error deleting portfolio:', error);
+                alert('Gagal menghapus portofolio');
+            }
         }
     };
 
@@ -41,19 +62,21 @@ export const PortfolioList: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleSave = (data: Partial<PortfolioItem>) => {
-        if (currentItem) {
-            // Edit Mode
-            setItems(items.map(i => i.id === currentItem.id ? { ...i, ...data } as PortfolioItem : i));
-        } else {
-            // Add Mode
-            const item: PortfolioItem = {
-                ...data as PortfolioItem,
-                id: Math.random().toString(36).substr(2, 9),
-            };
-            setItems([...items, item]);
+    const handleSave = async (data: Partial<PortfolioItem>) => {
+        try {
+            if (currentItem && currentItem.id) {
+                // Edit Mode
+                await portfolioService.update(currentItem.id, data);
+            } else {
+                // Add Mode
+                await portfolioService.create(data as PortfolioItem);
+            }
+            fetchPortfolio();
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error('Error saving portfolio:', error);
+            alert('Gagal menyimpan data portofolio');
         }
-        setIsModalOpen(false);
     };
 
     const filteredItems = items.filter(item =>
@@ -98,71 +121,78 @@ export const PortfolioList: React.FC = () => {
             </div>
 
             {/* Gallery Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredItems.map(item => (
-                    <div key={item.id} className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:shadow-2xl hover:shadow-blue-100 transition-all duration-500 hover:-translate-y-2 relative flex flex-col h-full">
-                        {/* Edit & Delete Actions Absolute */}
-                        <div className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                            <button
-                                onClick={() => handleEdit(item)}
-                                className="p-2.5 bg-white/90 backdrop-blur-sm text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white hover:scale-110 transition-all shadow-sm"
-                                title="Edit"
-                            >
-                                <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => handleDelete(item.id)}
-                                className="p-2.5 bg-white/90 backdrop-blur-sm text-red-500 rounded-xl hover:bg-red-500 hover:text-white hover:scale-110 transition-all shadow-sm"
-                                title="Hapus"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
-                        </div>
+            {isLoading ? (
+                <div className="text-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-500 font-medium">Memuat data portofolio...</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {filteredItems.map(item => (
+                        <div key={item.id} className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:shadow-2xl hover:shadow-blue-100 transition-all duration-500 hover:-translate-y-2 relative flex flex-col h-full">
+                            {/* Edit & Delete Actions Absolute */}
+                            <div className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                <button
+                                    onClick={() => handleEdit(item)}
+                                    className="p-2.5 bg-white/90 backdrop-blur-sm text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white hover:scale-110 transition-all shadow-sm"
+                                    title="Edit"
+                                >
+                                    <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(item.id)}
+                                    className="p-2.5 bg-white/90 backdrop-blur-sm text-red-500 rounded-xl hover:bg-red-500 hover:text-white hover:scale-110 transition-all shadow-sm"
+                                    title="Hapus"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
 
-                        <div className="relative h-64 overflow-hidden">
-                            <img
-                                src={item.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image'}
-                                alt={item.title}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            />
+                            <div className="relative h-64 overflow-hidden">
+                                <img
+                                    src={item.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image'}
+                                    alt={item.title}
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                />
 
-                            {/* Overlay info */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+                                {/* Overlay info */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
 
-                            <div className="absolute bottom-4 left-4 right-4 text-white z-10">
-                                <span className="inline-block px-3 py-1 rounded-full bg-blue-600/90 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider mb-2 shadow-lg">
-                                    {item.category.split(' ').slice(1).join(' ')} {/* Trim emoji roughly */}
-                                </span>
-                                {item.images && item.images.length > 1 && (
-                                    <div className="absolute bottom-1 right-0 flex items-center gap-1 bg-black/50 px-2 py-1 rounded-lg backdrop-blur-md text-xs font-bold">
-                                        <Layers className="w-3 h-3" />
-                                        +{item.images.length - 1}
-                                    </div>
-                                )}
+                                <div className="absolute bottom-4 left-4 right-4 text-white z-10">
+                                    <span className="inline-block px-3 py-1 rounded-full bg-blue-600/90 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider mb-2 shadow-lg">
+                                        {item.category.split(' ').slice(1).join(' ')}
+                                    </span>
+                                    {item.images && item.images.length > 1 && (
+                                        <div className="absolute bottom-1 right-0 flex items-center gap-1 bg-black/50 px-2 py-1 rounded-lg backdrop-blur-md text-xs font-bold">
+                                            <Layers className="w-3 h-3" />
+                                            +{item.images.length - 1}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="p-6 flex flex-col flex-1">
+                                <div className="mb-3">
+                                    <h3 className="font-bold text-gray-900 text-xl leading-snug mb-2 group-hover:text-blue-600 transition-colors">{item.title}</h3>
+                                    <p className="text-xs text-gray-400 font-bold bg-gray-50 inline-block px-2 py-1 rounded-md">{item.date}</p>
+                                </div>
+                                <p className="text-gray-500 text-sm leading-relaxed mb-6 line-clamp-3">{item.description}</p>
                             </div>
                         </div>
+                    ))}
 
-                        <div className="p-6 flex flex-col flex-1">
-                            <div className="mb-3">
-                                <h3 className="font-bold text-gray-900 text-xl leading-snug mb-2 group-hover:text-blue-600 transition-colors">{item.title}</h3>
-                                <p className="text-xs text-gray-400 font-bold bg-gray-50 inline-block px-2 py-1 rounded-md">{item.date}</p>
-                            </div>
-                            <p className="text-gray-500 text-sm leading-relaxed mb-6 line-clamp-3">{item.description}</p>
+                    {/* Upload Placeholder */}
+                    <button
+                        onClick={handleOpenAdd}
+                        className="h-full min-h-[300px] border-3 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 transition-all gap-4 group"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-100 group-hover:scale-110 transition-all">
+                            <Plus className="w-8 h-8" />
                         </div>
-                    </div>
-                ))}
-
-                {/* Upload Placeholder */}
-                <button
-                    onClick={handleOpenAdd}
-                    className="h-full min-h-[300px] border-3 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 transition-all gap-4 group"
-                >
-                    <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-100 group-hover:scale-110 transition-all">
-                        <Plus className="w-8 h-8" />
-                    </div>
-                    <span className="font-bold text-lg">Tambah Proyek Baru</span>
-                </button>
-            </div>
+                        <span className="font-bold text-lg">Tambah Proyek Baru</span>
+                    </button>
+                </div>
+            )}
 
             <PortfolioEditModal
                 isOpen={isModalOpen}

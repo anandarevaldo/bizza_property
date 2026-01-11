@@ -3,11 +3,14 @@
 import React from 'react';
 import { Hammer, Users, Shield, CheckCircle, MessageCircle, ArrowRight, Zap, Clock } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+
 interface ServiceHighlightsProps {
-    switchView: (view: 'home' | 'search' | 'login' | 'admin' | 'layanan' | 'portfolio' | 'about') => void;
+    // switchView removed
 }
 
-const ServiceHighlights: React.FC<ServiceHighlightsProps> = ({ switchView }) => {
+const ServiceHighlights: React.FC<ServiceHighlightsProps> = () => {
+    const router = useRouter();
     return (
         <div className="py-24 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
@@ -62,7 +65,7 @@ const ServiceHighlights: React.FC<ServiceHighlightsProps> = ({ switchView }) => 
                                 ))}
                             </div>
 
-                            <button onClick={() => switchView('search')} className="w-fit bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold text-sm shadow-xl shadow-blue-500/20 transition-all flex items-center gap-3 group/btn hover:-translate-y-1">
+                            <button onClick={() => router.push('/')} className="w-fit bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold text-sm shadow-xl shadow-blue-500/20 transition-all flex items-center gap-3 group/btn hover:-translate-y-1">
                                 <span>Mulai Proyek Sekarang</span>
                                 <ArrowRight className="w-5 h-5 transform group-hover/btn:translate-x-1 transition-transform" />
                             </button>
@@ -121,7 +124,7 @@ const ServiceHighlights: React.FC<ServiceHighlightsProps> = ({ switchView }) => 
                                 ))}
                             </div>
 
-                            <button onClick={() => switchView('search')} className="w-fit bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-4 rounded-xl font-bold text-sm shadow-xl shadow-yellow-500/20 transition-all flex items-center gap-3 group/btn hover:-translate-y-1">
+                            <button onClick={() => router.push('/')} className="w-fit bg-yellow-500 hover:bg-yellow-600 text-white px-8 py-4 rounded-xl font-bold text-sm shadow-xl shadow-yellow-500/20 transition-all flex items-center gap-3 group/btn hover:-translate-y-1">
                                 <span>Panggil Teknisi Sekarang</span>
                                 <ArrowRight className="w-5 h-5 transform group-hover/btn:translate-x-1 transition-transform" />
                             </button>

@@ -1,24 +1,27 @@
+'use client';
+
 import React from 'react';
 import { Home, Users, Calendar, Briefcase, FileText, LayoutGrid, HardHat, Image, LogOut, DollarSign, X } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 interface SidebarProps {
-    activeTab: string;
-    setActiveTab: (tab: string) => void;
     onLogout: () => void;
     isOpen: boolean;
     onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, isOpen, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onLogout, isOpen, onClose }) => {
+    const pathname = usePathname();
+
     const menuItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-        { id: 'layanan', label: 'Daftar Layanan', icon: Briefcase },
-        { id: 'jasa', label: 'Daftar Jasa', icon: HardHat },
-        { id: 'mandor', label: 'Data Mandor', icon: Users },
-        { id: 'jadwal', label: 'Jadwal & Detail', icon: Calendar },
-        { id: 'portofolio', label: 'Portofolio', icon: Image },
-        { id: 'pemesanan', label: 'Pemesanan / Order', icon: FileText },
-        { id: 'rab', label: 'Persetujuan RAB', icon: DollarSign },
+        { href: '/Admin/Dashboard', label: 'Dashboard', icon: LayoutGrid },
+        { href: '/Admin/Layanan', label: 'Daftar Layanan', icon: Briefcase },
+        { href: '/Admin/Jasa', label: 'Daftar Jasa', icon: HardHat },
+        { href: '/Admin/Mandor', label: 'Data Mandor', icon: Users },
+        { href: '/Admin/Schedule', label: 'Jadwal & Detail', icon: Calendar },
+        { href: '/Admin/Portofolio', label: 'Portofolio', icon: Image },
+        { href: '/Admin/Order', label: 'Pemesanan / Order', icon: FileText },
     ];
 
     return (
@@ -62,12 +65,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, is
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 ml-2">Main Menu</p>
                     <div className="space-y-2">
                         {menuItems.map((item) => {
-                            const isActive = activeTab === item.id;
+                            const isActive = pathname === item.href;
                             return (
-                                <button
-                                    key={item.id}
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
                                     onClick={() => {
-                                        setActiveTab(item.id);
                                         onClose(); // Close sidebar on mobile when item selected
                                     }}
                                     className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-bold text-sm relative overflow-hidden group
@@ -85,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, is
                                     {isActive && (
                                         <div className="absolute right-0 top-0 bottom-0 w-1 bg-white/20 blur-sm"></div>
                                     )}
-                                </button>
+                                </Link>
                             );
                         })}
                     </div>

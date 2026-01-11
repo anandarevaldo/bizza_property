@@ -8,8 +8,6 @@ export interface PaymentMethod {
     name: string;
     type: 'ewallet' | 'va' | 'manual';
     icon: string;
-    balance?: number;
-    description?: string;
 }
 
 export interface ProblemType {

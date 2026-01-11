@@ -1,8 +1,8 @@
 import React from 'react';
-import MandorDashboard from '../../../components/dashboard-mandor/Dashboard';
+import DashboardOverview from '../../../components/dashboard-mandor/DashboardOverview';
 
 const DashboardPage = () => {
-    return <MandorDashboard />;
+    return <DashboardOverview />;
 };
 
 export default DashboardPage;

@@ -1,11 +1,14 @@
 import React from 'react';
 import { Home, Briefcase, User, Wrench } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+
 interface ServiceSectionProps {
-    switchView: (view: any) => void;
+    // switchView removed
 }
 
-const ServiceSection: React.FC<ServiceSectionProps> = ({ switchView }) => {
+const ServiceSection: React.FC<ServiceSectionProps> = () => {
+    const router = useRouter();
     return (
         <section className="pt-12 pb-16 bg-white">
             <div className="container mx-auto px-4 md:px-12">
@@ -18,7 +21,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({ switchView }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Untuk Rumah */}
                         <div
-                            onClick={() => switchView('booking-form')}
+                            onClick={() => router.push('/User/Form/FormRumah')}
                             className="bg-white border-2 border-red-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-red-100 h-52 flex flex-col justify-between hover:-translate-y-2"
                         >
                             <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
@@ -35,7 +38,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({ switchView }) => {
 
                         {/* Untuk Bisnis */}
                         <div
-                            onClick={() => switchView('booking-form-business')}
+                            onClick={() => router.push('/User/Form/FormBusiness')}
                             className="bg-white border-2 border-green-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-green-100 h-52 flex flex-col justify-between hover:-translate-y-2">
                             <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
                                 <Briefcase className="w-40 h-40 text-green-500" />
@@ -54,7 +57,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({ switchView }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Tukang Saja */}
                     <div
-                        onClick={() => switchView('handyman-selection')}
+                        onClick={() => router.push('/User/Home/Tukang')}
                         className="bg-white border-2 border-yellow-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-yellow-100 h-52 flex flex-col justify-between hover:-translate-y-2">
                         <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
                             <User className="w-40 h-40 text-yellow-500" />
@@ -70,7 +73,7 @@ const ServiceSection: React.FC<ServiceSectionProps> = ({ switchView }) => {
 
                     {/* Layanan Perbaikan */}
                     <div
-                        onClick={() => switchView('repair-service-selection')}
+                        onClick={() => router.push('/User/Home/Layanan')}
                         className="bg-white border-2 border-cyan-50 rounded-3xl p-6 hover:shadow-xl transition-all duration-500 cursor-pointer shadow-sm relative overflow-hidden group hover:border-cyan-100 h-52 flex flex-col justify-between hover:-translate-y-2">
                         <div className="absolute -bottom-6 -right-6 p-4 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:scale-110 group-hover:rotate-12">
                             <Wrench className="w-40 h-40 text-cyan-500" />

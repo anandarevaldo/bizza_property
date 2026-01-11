@@ -1,31 +1,41 @@
+'use client';
+
 import React, { useState } from 'react';
-import { ChevronRight, AlertCircle, Search } from 'lucide-react';
-import { handymanTypes } from '../../../../components/Layanan/data';
-import HandymanCard from '../../../../components/Layanan/HandymanCard';
-import SearchBar from '../../../../components/Layanan/SearchBar';
-import TopSearch from '../../../../components/Layanan/TopSearch';
-import StrukturBangunan from '../../../../components/Layanan/StrukturBangunan';
-import FinisihingInterior from '../../../../components/Layanan/FinisihingInterior';
-import UtilitasPerbaikan from '../../../../components/Layanan/UtilitasPerbaikan';
-import AssistenLainnnya from '../../../../components/Layanan/AssistenLainnnya';
+import { ChevronRight, AlertCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ServiceHero } from '@/components/Layanan/RepairServiceSelection/ServiceHero';
+import { ServiceGrid } from '@/components/Layanan/RepairServiceSelection/ServiceGrid';
+import { ServiceType } from '@/components/Layanan/RepairServiceSelection/types';
+import { ICON_MAP } from '@/lib/constants/serviceTemplates';
+import { Wrench } from 'lucide-react';
+import { ServiceItem } from '@/lib/services/layananService';
 
 interface LayananProps {
-    switchView: (view: any) => void;
-    onSelectHandyman: (type: string) => void;
+    services: ServiceItem[];
 }
 
-const Layanan: React.FC<LayananProps> = ({ switchView, onSelectHandyman }) => {
+const Layanan: React.FC<LayananProps> = ({ services }) => {
+    const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
 
-    const handleSelect = (name: string) => {
-        onSelectHandyman(name);
-        switchView('booking-form-handyman');
-    };
+    // Mapping Database ServiceItem to Selection ServiceType
+    const mappedServices: ServiceType[] = services.map(s => {
+        const IconComponent = ICON_MAP[s.icon_name] || Wrench;
+        return {
+            id: s.id.toString(),
+            name: s.name,
+            desc: s.description,
+            icon: IconComponent,
+            icon_name: s.icon_name,
+            color: s.color_class,
+            bg: s.bg_gradient.includes(' ') ? s.bg_gradient.split(' ')[0] : s.bg_gradient,
+            category: s.category
+        };
+    });
 
-    // Filter Logic for Search Results
-    const filteredHandyman = handymanTypes.filter(h =>
-        h.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const handleSelect = (name: string) => {
+        router.push(`/User/Form/FormLayanan?type=${encodeURIComponent(name)}`);
+    };
 
     return (
         <div className="min-h-screen bg-white font-sans animate-fade-in pb-20">
@@ -33,9 +43,9 @@ const Layanan: React.FC<LayananProps> = ({ switchView, onSelectHandyman }) => {
             <div className="bg-white border-b border-gray-200 py-4 px-6 md:px-12 sticky top-0 z-40 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3 text-sm md:text-base">
                     <div className="flex items-center gap-2 text-gray-500">
-                        <span className="cursor-pointer hover:text-blue-600" onClick={() => switchView('home')}>Home</span>
+                        <span className="cursor-pointer hover:text-blue-600" onClick={() => router.push('/')}>Home</span>
                         <ChevronRight className="w-4 h-4" />
-                        <span className="font-bold text-gray-900">Pilih Tukang</span>
+                        <span className="font-bold text-gray-900">Pilih Layanan</span>
                     </div>
                 </div>
                 <div className="ml-auto">
@@ -44,33 +54,18 @@ const Layanan: React.FC<LayananProps> = ({ switchView, onSelectHandyman }) => {
             </div>
 
             <div className="container mx-auto px-4 md:px-12 py-8 max-w-6xl">
-                {/* Hero / Search Section */}
-                <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+                {/* Hero / Search */}
+                <ServiceHero
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                />
 
                 {/* CONTENT AREA */}
-                {searchTerm ? (
-                    /* SEARCH RESULTS (Flat Grid) */
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fade-in">
-                        {filteredHandyman.map((item) => (
-                            <HandymanCard key={item.id} item={item} onClick={() => handleSelect(item.name)} />
-                        ))}
-                        {filteredHandyman.length === 0 && (
-                            <div className="col-span-full text-center py-20 text-gray-400">
-                                <Search className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                                <p className="text-xl font-bold text-gray-300">Tukang tidak ditemukan</p>
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    /* CATEGORIZED VIEW */
-                    <div className="space-y-12 animate-fade-in">
-                        <TopSearch onSelectHandyman={handleSelect} />
-                        <StrukturBangunan onSelectHandyman={handleSelect} />
-                        <FinisihingInterior onSelectHandyman={handleSelect} />
-                        <UtilitasPerbaikan onSelectHandyman={handleSelect} />
-                        <AssistenLainnnya onSelectHandyman={handleSelect} />
-                    </div>
-                )}
+                <ServiceGrid
+                    searchTerm={searchTerm}
+                    serviceTypes={mappedServices}
+                    onSelectService={handleSelect}
+                />
             </div>
         </div>
     );

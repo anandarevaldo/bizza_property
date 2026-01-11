@@ -3,7 +3,7 @@ import RegisterHero from '../../../components/Register/RegisterHero';
 import RegisterForm from '../../../components/Register/RegisterForm';
 
 interface RegisterProps {
-    switchView: (view: any) => void;
+    switchView?: (view: any) => void;
 }
 
 const Register: React.FC<RegisterProps> = ({ switchView }) => {

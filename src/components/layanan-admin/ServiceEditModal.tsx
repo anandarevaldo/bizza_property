@@ -2,16 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronRight, CheckCircle2, Briefcase, DollarSign, AlignLeft, ChevronDown, ListFilter, Activity } from 'lucide-react';
 import { Service } from './ServiceList';
-import { serviceTypes, categories } from '../Layanan/RepairServiceSelection/constants';
+import { ICON_MAP, COLOR_PRESETS } from '@/lib/constants/serviceTemplates';
 
 interface ServiceEditModalProps {
     isOpen: boolean;
     onClose: () => void;
     service: Service | null;
     onSave: (data: Partial<Service>) => void;
+    availableCategories: string[];
 }
 
-export const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onClose, service, onSave }) => {
+export const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onClose, service, onSave, availableCategories }) => {
     const [formData, setFormData] = useState<Partial<Service>>({});
     const [iconType, setIconType] = useState<'lucide' | 'image'>('lucide');
     const [uploading, setUploading] = useState(false);
@@ -146,6 +147,31 @@ export const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onCl
                             />
                         </div>
 
+                        {/* Theme Selection */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Warna Tema</label>
+                            <div className="flex flex-wrap gap-3">
+                                {COLOR_PRESETS.map((theme) => (
+                                    <button
+                                        key={theme.name}
+                                        type="button"
+                                        onClick={() => setFormData({
+                                            ...formData,
+                                            color_class: theme.color,
+                                            bg_gradient: theme.gradient,
+                                            pattern_color: theme.pattern
+                                        })}
+                                        className={`w-10 h-10 rounded-full border-2 transition-all ${theme.bg} ${
+                                            formData.pattern_color === theme.pattern
+                                                ? 'border-gray-800 scale-110 shadow-md ring-2 ring-offset-2 ring-gray-300' 
+                                                : 'border-transparent hover:scale-105 opacity-70 hover:opacity-100'
+                                        }`}
+                                        title={theme.name}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Icon Selection with Toggle */}
                         <div>
                             <div className="flex items-center justify-between mb-3">
@@ -171,14 +197,13 @@ export const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onCl
                             {iconType === 'lucide' ? (
                                 <>
                                     <div className="flex gap-3 overflow-x-auto pb-4 pt-2 snap-x">
-                                        {serviceTypes.map(s => {
-                                            const Icon = s.icon;
-                                            const isSelected = formData.icon === s.name || (!formData.icon && formData.name === s.name);
+                                        {Object.entries(ICON_MAP).map(([iconName, Icon]) => {
+                                            const isSelected = formData.icon === iconName;
                                             return (
                                                 <button
-                                                    key={s.id}
+                                                    key={iconName}
                                                     type="button"
-                                                    onClick={() => setFormData({ ...formData, icon: s.name, imageUrl: undefined })}
+                                                    onClick={() => setFormData({ ...formData, icon: iconName, imageUrl: undefined })}
                                                     className={`
                                                         flex-shrink-0 flex flex-col items-center justify-center w-20 h-20 rounded-2xl border-2 transition-all duration-200 snap-start
                                                         ${isSelected
@@ -187,7 +212,7 @@ export const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onCl
                                                     `}
                                                 >
                                                     <Icon className={`w-8 h-8 mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
-                                                    <span className="text-[10px] font-bold text-gray-600 truncate w-full px-1">{s.name}</span>
+                                                    <span className="text-[10px] font-bold text-gray-600 truncate w-full px-1">{iconName}</span>
                                                 </button>
                                             );
                                         })}
@@ -232,13 +257,17 @@ export const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onCl
                                 <select
                                     value={formData.category || ''}
                                     onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                    className="w-full pl-4 pr-10 py-4 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold text-gray-800 bg-white appearance-none"
+                                    className="w-full pl-4 pr-10 py-4 rounded-xl border border-gray-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all font-bold text-gray-800 bg-white appearance-none shadow-sm"
                                     required
                                 >
                                     <option value="" disabled>Pilih Kategori</option>
-                                    {Object.entries(categories).map(([key, group]) => (
-                                        <option key={key} value={group.title}>{group.title}</option>
+                                    {availableCategories.map((cat) => (
+                                        <option key={cat} value={cat}>{cat}</option>
                                     ))}
+                                    {/* Handle case where current category might not be in the dynamic list yet */}
+                                    {formData.category && !availableCategories.includes(formData.category) && (
+                                        <option value={formData.category}>{formData.category}</option>
+                                    )}
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
                             </div>

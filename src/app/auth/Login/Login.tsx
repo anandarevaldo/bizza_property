@@ -3,7 +3,7 @@ import LoginHero from '../../../components/Login/LoginHero';
 import LoginForm from '../../../components/Login/LoginForm';
 
 interface LoginProps {
-    switchView: (view: any) => void;
+    switchView?: (view: any) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ switchView }) => {

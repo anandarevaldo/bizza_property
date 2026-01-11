@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Upload, User, Phone, Briefcase, Award, FileText, ChevronDown, Check } from 'lucide-react';
-import { serviceTypes } from '../Layanan/RepairServiceSelection/constants';
+import { X, Upload, User, Phone, Briefcase, Award, FileText, ChevronDown, Check, Home } from 'lucide-react';
+import { useServices } from '@/hooks/useServices';
+import { ICON_MAP } from '@/lib/constants/serviceTemplates';
 
 interface TeamMember {
     id: number;
@@ -24,44 +25,85 @@ interface TeamMemberModalProps {
 }
 
 export const TeamMemberModal: React.FC<TeamMemberModalProps> = ({ isOpen, onClose, member, onSave }) => {
+    const { services } = useServices();
     const [formData, setFormData] = useState<Partial<TeamMember>>({
         name: '',
-        role: serviceTypes[0].name,
+        role: '',
         phone: '',
         skill: 'Intermediate',
         experience: '1 Tahun',
         bio: '',
     });
 
-    const [selectedRole, setSelectedRole] = useState(serviceTypes[0]);
+    const [selectedRole, setSelectedRole] = useState<{name: string, icon: any, color: string, bg: string}>({
+        name: 'Pilih Spesialisasi',
+        icon: Briefcase,
+        color: 'text-gray-400',
+        bg: 'bg-gray-50'
+    });
     const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+
+    useEffect(() => {
+        if (services.length > 0 && !formData.role && !member) {
+            handleChange('role', services[0].name);
+            const Icon = ICON_MAP[services[0].icon_name] || Home;
+            setSelectedRole({
+                name: services[0].name,
+                icon: Icon,
+                color: services[0].color_class,
+                bg: services[0].bg_gradient.split(' ')[0]
+            });
+        }
+    }, [services]);
 
     useEffect(() => {
         if (member) {
             setFormData(member);
-            const roleObj = serviceTypes.find(s => s.name === member.role);
-            if (roleObj) setSelectedRole(roleObj);
+            const s = services.find(s => s.name === member.role);
+            if (s) {
+                const Icon = ICON_MAP[s.icon_name] || Home;
+                setSelectedRole({
+                    name: s.name,
+                    icon: Icon,
+                    color: s.color_class,
+                    bg: s.bg_gradient.split(' ')[0]
+                });
+            }
         } else {
             setFormData({
                 name: '',
-                role: serviceTypes[0].name,
+                role: services[0]?.name || '',
                 phone: '',
                 skill: 'Intermediate',
                 experience: '1 Tahun',
                 bio: '',
             });
-            setSelectedRole(serviceTypes[0]);
+            if (services[0]) {
+                const Icon = ICON_MAP[services[0].icon_name] || Home;
+                setSelectedRole({
+                    name: services[0].name,
+                    icon: Icon,
+                    color: services[0].color_class,
+                    bg: services[0].bg_gradient.split(' ')[0]
+                });
+            }
         }
-    }, [member, isOpen]);
+    }, [member, isOpen, services]);
 
     const handleChange = (field: keyof TeamMember, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     const handleRoleSelect = (roleName: string) => {
-        const roleObj = serviceTypes.find(s => s.name === roleName);
-        if (roleObj) {
-            setSelectedRole(roleObj);
+        const s = services.find(s => s.name === roleName);
+        if (s) {
+            const Icon = ICON_MAP[s.icon_name] || Home;
+            setSelectedRole({
+                name: s.name,
+                icon: Icon,
+                color: s.color_class,
+                bg: s.bg_gradient.split(' ')[0]
+            });
             handleChange('role', roleName);
             setIsRoleDropdownOpen(false);
         }
@@ -165,20 +207,23 @@ export const TeamMemberModal: React.FC<TeamMemberModalProps> = ({ isOpen, onClos
 
                             {isRoleDropdownOpen && (
                                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-[2rem] shadow-xl border border-gray-100 p-2 z-30 max-h-60 overflow-y-auto custom-scrollbar">
-                                    {serviceTypes.map((type) => (
-                                        <button
-                                            key={type.id}
-                                            type="button"
-                                            onClick={() => handleRoleSelect(type.name)}
-                                            className={`w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors ${formData.role === type.name ? 'bg-blue-50' : ''}`}
-                                        >
-                                            <div className={`p-2 rounded-lg ${type.bg} ${type.color}`}>
-                                                <type.icon className="w-4 h-4" />
-                                            </div>
-                                            <span className={`font-bold text-sm ${formData.role === type.name ? 'text-blue-700' : 'text-gray-700'}`}>{type.name}</span>
-                                            {formData.role === type.name && <Check className="w-4 h-4 text-blue-600 ml-auto" />}
-                                        </button>
-                                    ))}
+                                    {services.map((type) => {
+                                        const Icon = ICON_MAP[type.icon_name] || Home;
+                                        return (
+                                            <button
+                                                key={type.id}
+                                                type="button"
+                                                onClick={() => handleRoleSelect(type.name)}
+                                                className={`w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors ${formData.role === type.name ? 'bg-blue-50' : ''}`}
+                                            >
+                                                <div className={`p-2 rounded-lg ${type.bg_gradient.split(' ')[0]} ${type.color_class}`}>
+                                                    <Icon className="w-4 h-4" />
+                                                </div>
+                                                <span className={`font-bold text-sm ${formData.role === type.name ? 'text-blue-700' : 'text-gray-700'}`}>{type.name}</span>
+                                                {formData.role === type.name && <Check className="w-4 h-4 text-blue-600 ml-auto" />}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

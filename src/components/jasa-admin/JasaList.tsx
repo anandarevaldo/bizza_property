@@ -1,9 +1,12 @@
 
 
+'use client';
+
 import React, { useState } from 'react';
 import { Plus, Search, Edit2, Trash2, X, Hammer, ChevronRight } from 'lucide-react';
 import { JasaEditModal } from './JasaEditModal';
-import { serviceTypes } from '../Layanan/RepairServiceSelection/constants';
+import { useServices } from '@/hooks/useServices';
+import { ICON_MAP } from '@/lib/constants/serviceTemplates';
 
 export interface Jasa {
     id: string;
@@ -26,6 +29,7 @@ export const JasaList: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentJasa, setCurrentJasa] = useState<Jasa | null>(null);
+    const { services } = useServices();
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
@@ -116,10 +120,10 @@ export const JasaList: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-100 bg-white">
                         {filteredJasa.map((jasa) => {
-                            const service = serviceTypes.find(s => s.name === jasa.name);
-                            const Icon = service?.icon || Hammer;
-                            const iconBg = service?.bg || 'bg-gray-100';
-                            const iconColor = service?.color || 'text-gray-500';
+                            const service = services.find(s => s.name === jasa.name);
+                            const Icon = service ? (ICON_MAP[service.icon_name] || Hammer) : Hammer;
+                            const iconBg = service?.bg_gradient.split(' ')[0] || 'bg-gray-100';
+                            const iconColor = service?.color_class || 'text-gray-500';
 
                             return (
                                 <tr key={jasa.id} className="hover:bg-blue-50/30 transition-colors group cursor-default">

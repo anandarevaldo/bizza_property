@@ -3,6 +3,8 @@ import { supabase } from '../supabaseClient';
 
 export interface CreateOrderParams {
     userId: string;
+    customerName?: string;
+    tipe_pesanan?: 'Rumah' | 'Bisnis' | 'Layanan' | 'Tukang';
     propertyType: string;
     description: string;
     address: string;
@@ -18,19 +20,36 @@ export const orderService = {
             .from('orders')
             .insert({
                 user_id: data.userId,
+                customer_name: data.customerName,
+                tipe_pesanan: data.tipe_pesanan || 'Rumah',
+                tipe_properti: data.propertyType,
+                deskripsi: data.description,
                 alamat_proyek: data.address,
-                catatan: data.description,
-                tanggal_pesan: new Date().toISOString(),
+                budget: data.budget,
                 jadwal_survey: data.selectedDate ? new Date(data.selectedDate).toISOString() : null,
-                status_pesanan: 'ON_PROGRESS', // Default status
-                // mandor_id is initially null
-                // layanan_id needs to be determined or left null for now
+                jam_survey: data.selectedTime,
+                status_pesanan: 'ON_PROGRESS',
+                payment_method: data.paymentMethod,
+                tanggal_pesan: new Date().toISOString(),
             })
             .select()
             .single();
 
         if (error) throw error;
         return order;
+    },
+
+    async getAllOrders() {
+        const { data, error } = await supabase
+            .from('orders')
+            .select(`
+                *,
+                layanan:layanan_id (nama_layanan)
+            `)
+            .order('tanggal_pesan', { ascending: false });
+
+        if (error) throw error;
+        return data;
     },
 
     async uploadOrderImage(file: File, orderId: string, userId: string) {
@@ -51,14 +70,14 @@ export const orderService = {
         return data.publicUrl;
     },
 
-    async createDocumentation(orderId: number, userId: string, fileUrl: string) {
+    async createDocumentation(orderId: number, userId: string, fileUrl: string, keterangan = 'Initial order documentation') {
         const { error } = await supabase
             .from('dokumentasi')
             .insert({
                 pesanan_id: orderId,
                 uploaded_by: userId,
                 file_url: fileUrl,
-                keterangan: 'Initial order documentation',
+                keterangan: keterangan,
             });
 
         if (error) throw error;

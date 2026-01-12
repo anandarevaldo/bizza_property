@@ -183,7 +183,10 @@ const ServiceRepairBooking: React.FC<ServiceRepairBookingProps> = ({ switchView,
             if (order) {
                 // Upload Proof
                 const proofUrl = await orderService.uploadOrderImage(paymentProof, order.pesanan_id.toString(), user.id);
+                // Save to Documentation (Legacy/Backup)
                 await orderService.createDocumentation(order.pesanan_id, user.id, proofUrl, 'Bukti Pembayaran QRIS');
+                // Save to Orders Table (Main)
+                await orderService.updateOrder(order.pesanan_id, { payment_proof: proofUrl });
 
                 alert("Pesanan Perbaikan Berhasil Dikirim! Kami akan segera memverifikasi pembayaran Anda.");
                 switchView('home');

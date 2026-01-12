@@ -31,9 +31,9 @@ const MandorSidebar: React.FC<MandorSidebarProps> = ({ onLogout, isOpen, onClose
 
             {/* Sidebar */}
             <div className={`
-                fixed inset-y-0 left-0 z-50 w-72 bg-white flex flex-col h-screen shadow-2xl font-sans
+                fixed inset-y-0 left-0 z-30 w-72 bg-white flex flex-col h-screen shadow-2xl font-sans
                 transform transition-transform duration-300 ease-in-out
-                lg:translate-x-0 lg:static lg:shadow-none lg:h-screen lg:sticky lg:top-0
+                lg:translate-x-0 lg:shadow-none lg:h-screen lg:static
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
                 {/* Brand Logo & Close Button */}

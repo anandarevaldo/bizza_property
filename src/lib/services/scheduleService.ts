@@ -17,7 +17,9 @@ export interface Schedule {
     tipeProperti?: string;
     kategoriLayanan?: 'Borongan' | 'Jasa Tukang';
     assignedHandymanId?: number;
+    assignedHandymen?: { id: number; name: string; knownSkill?: string }[];
     handymanName?: string;
+    handymanSkill?: string;
 }
 
 export const scheduleService = {

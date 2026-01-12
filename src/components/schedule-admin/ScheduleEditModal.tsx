@@ -16,6 +16,10 @@ interface Schedule {
     address: string;
     mandor: string;
     mandorId?: number;
+    assignedHandymanId?: number;
+    assignedHandymen?: { id: number; name: string; knownSkill?: string }[];
+    handymanName?: string;
+    handymanSkill?: string;
     status: 'Need Validation' | 'On Progress' | 'Cancel' | 'Done';
 }
 
@@ -50,7 +54,7 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
             if (schedule) {
                 setFormData(schedule);
             } else {
-                setFormData({ date: selectedDate, status: 'Need Validation' });
+                setFormData({ date: selectedDate, status: 'On Progress' });
             }
         }
     }, [isOpen, schedule, selectedDate]);
@@ -65,7 +69,7 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
             <div className="bg-white rounded-[1.5rem] w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl animate-scale-up border border-gray-100">
                 <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
                     <div>
@@ -115,8 +119,8 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                         </div>
                         <div className="mt-4">
                             <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Status</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                {['Need Validation', 'On Progress', 'Done', 'Cancel'].map((status) => (
+                            <div className="grid grid-cols-3 gap-2">
+                                {['On Progress', 'Done', 'Cancel'].map((status) => (
                                     <button
                                         key={status}
                                         type="button"
@@ -124,8 +128,7 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                                         className={`px-2 py-2 rounded-lg text-xs font-bold border transition-all ${formData.status === status
                                             ? status === 'On Progress' ? 'bg-blue-50 border-blue-500 text-blue-700' :
                                                 status === 'Done' ? 'bg-green-50 border-green-500 text-green-700' :
-                                                    status === 'Need Validation' ? 'bg-yellow-50 border-yellow-500 text-yellow-700' :
-                                                        'bg-red-50 border-red-500 text-red-700'
+                                                    'bg-red-50 border-red-500 text-red-700'
                                             : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'
                                             }`}
                                     >
@@ -201,6 +204,46 @@ export const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({ isOpen, on
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
                                 </div>
+
+                    {/* Section: Assigned Handyman (Read Only) */}
+                    {(schedule?.handymanName || (schedule?.assignedHandymen && schedule.assignedHandymen.length > 0)) && (
+                        <div className="bg-blue-50/50 rounded-2xl p-4 border border-blue-100">
+                            <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <HardHat className="w-4 h-4 text-blue-600" /> Tim Bertugas
+                            </h4>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                    {(schedule?.assignedHandymen?.length || 0) > 1 ? 'Tim Tukang' : 'Tukang'}
+                                </label>
+                                
+                                {schedule?.assignedHandymen && schedule.assignedHandymen.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {schedule.assignedHandymen.map((tm, idx) => (
+                                            <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-blue-100">
+                                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                                    {tm.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-900 text-sm">{tm.name}</p>
+                                                    <p className="text-xs text-gray-500 font-medium">{tm.knownSkill || 'Anggota Tim'}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-blue-100">
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                            {(schedule?.handymanName || '?').charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900 text-sm">{schedule?.handymanName}</p>
+                                            <p className="text-xs text-gray-500 font-medium">{schedule?.handymanSkill || 'Tukang'}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                             </div>
                         </div>
                     </div>

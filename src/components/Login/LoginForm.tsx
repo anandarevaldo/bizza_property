@@ -23,12 +23,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ switchView }) => {
         e.preventDefault();
 
         // Restore Mock Logins for Admin/Mandor
+        // Restore Mock Logins for Admin/Mandor
         if (email === 'admin@bizza.com' && password === 'admin123') {
-            router.push('/admin/dashboard');
-            return;
+           router.push('/admin/dashboard');
+           return;
         } else if (email === 'mandor@bizza.com' && password === 'mandor123') {
-            router.push('/mandor/dashboard');
-            return;
+           router.push('/mandor/dashboard');
+           return;
         }
 
         try {

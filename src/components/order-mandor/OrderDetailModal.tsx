@@ -14,7 +14,8 @@ export interface Order {
     userBudget?: string;
     rabProposed?: number;
     rabStatus?: 'Pending' | 'Approved' | 'Rejected';
-    assignedHandymanId?: number;
+    assignedHandymanId?: number; // Legacy
+    assignedHandymen?: { id: number; name: string; role?: string }[];
     pesananId?: number; // Real Order ID
     handymanName?: string;
     handymanRole?: string;
@@ -63,8 +64,9 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
     const [currentProgress, setCurrentProgress] = useState(initialProgress);
     const [documentation, setDocumentation] = useState<Documentation[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [pendingPhotos, setPendingPhotos] = useState<File[]>([]); // New: Store photos before upload
 
-    const [selectedHandymanId, setSelectedHandymanId] = useState<number | undefined>(undefined);
+    const [selectedHandymanIds, setSelectedHandymanIds] = useState<number[]>([]);
 
     // Split estimation into value and unit
     const [estValue, setEstValue] = useState('');
@@ -88,9 +90,9 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
 
     const handleSaveRab = () => {
         const numericValue = parseInt(rabInput.replace(/\./g, ''), 10);
-        if (numericValue > 0) {
+        if (order && numericValue > 0) {
             // Save to localStorage to persist change across pages
-            const updatedOrder = { ...order, rabProposed: numericValue, rabStatus: 'Pending' };
+            const updatedOrder = { ...order, rabProposed: numericValue, rabStatus: 'Pending' } as Order;
             localStorage.setItem('srv_test_001_rab', JSON.stringify(numericValue));
             alert(`Penawaran RAB sebesar Rp ${rabInput} berhasil diajukan!`);
             onClose();
@@ -102,14 +104,30 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
     useEffect(() => {
         if (order) {
             setCurrentProgress(order.progress || 0);
-            setSelectedHandymanId(order.assignedHandymanId);
+            
+            // Initialize assignments
+            if (order.assignedHandymen && order.assignedHandymen.length > 0) {
+                setSelectedHandymanIds(order.assignedHandymen.map(h => h.id));
+            } else if (order.assignedHandymanId) {
+                // Fallback for legacy single assignment
+                setSelectedHandymanIds([order.assignedHandymanId]);
+            } else {
+                setSelectedHandymanIds([]);
+            }
 
             // Fetch documentation
             const fetchDocs = async () => {
                 // Use pesananId if available, otherwise fallback (though likely won't work for db foreign key)
                 const targetId = order.pesananId ? order.pesananId.toString() : order.id;
+                try {
                 const docs = await documentationService.getByOrderId(targetId);
-                setDocumentation(docs);
+                // Filter out payment proofs - only show progress documentation
+                const progressDocs = docs.filter(doc => 
+                    !doc.description.toLowerCase().includes('bukti pembayaran') && 
+                    !doc.description.toLowerCase().includes('payment')
+                );
+                setDocumentation(progressDocs);
+                } catch(e) { console.error(e) }
             };
             fetchDocs();
 
@@ -152,8 +170,24 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
         setCurrentProgress(val);
     };
 
-    const handleSave = () => {
-        const selectedHandyman = availableHandymen.find(h => h.id === selectedHandymanId);
+    const handleSave = async () => {
+        // Collect selected objects
+        const selectedHandymen = availableHandymen.filter(h => selectedHandymanIds.includes(h.id));
+        const primaryHandyman = selectedHandymen[0];
+
+        // Upload pending photos first
+        if (pendingPhotos.length > 0 && order.pesananId) {
+            try {
+                for (const photo of pendingPhotos) {
+                    await documentationService.uploadProof(photo, order.pesananId.toString(), 'Uploaded by Mandor');
+                }
+                // Clear pending photos after successful upload
+                setPendingPhotos([]);
+            } catch (error: any) {
+                alert(`Gagal mengupload foto: ${error.message || 'Unknown error'}`);
+                return; // Don't proceed with save if photo upload fails
+            }
+        }
 
         // Combine value and unit
         const combinedEstimation = estValue ? `${estValue} ${estUnit}` : '';
@@ -162,10 +196,11 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
             ...order,
             progress: currentProgress,
             estimation: combinedEstimation,
-            assignedHandymanId: selectedHandymanId,
-            handymanName: selectedHandyman?.name || order.handymanName,
-            handymanRole: selectedHandyman?.role || order.handymanRole,
-            status: (order.status === 'Need Validation' && selectedHandymanId) ? 'On Progress' : order.status
+            assignedHandymanId: primaryHandyman?.id, // Legacy compat
+            assignedHandymen: selectedHandymen,
+            handymanName: selectedHandymen.map(h => h.name).join(', '),
+            handymanRole: primaryHandyman?.role,
+            status: (order.status === 'Need Validation' && selectedHandymanIds.length > 0) ? 'On Progress' : order.status
         };
 
         if (onSave) onSave(updatedOrder);
@@ -179,25 +214,15 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file && order) {
-            try {
-                if (!order.pesananId) {
-                    throw new Error("Order ID (Pesanan ID) tidak ditemukan. Jadwal ini mungkin tidak terhubung dengan Order.");
-                }
-
-                setIsUploading(true);
-                // Use real pesananId
-                await documentationService.uploadProof(file, order.pesananId.toString(), 'Uploaded by Mandor');
-
-                // Refresh list using the same ID
-                const docs = await documentationService.getByOrderId(order.pesananId.toString());
-                setDocumentation(docs);
-            } catch (error: any) {
-                console.error("Upload failed", error);
-                alert(`Gagal mengupload foto: ${error.message || 'Unknown error'}`);
-            } finally {
-                setIsUploading(false);
-            }
+            // Instead of uploading immediately, add to pending photos
+            setPendingPhotos(prev => [...prev, file]);
+            // Reset input so same file can be selected again if needed
+            event.target.value = '';
         }
+    };
+
+    const handleRemovePendingPhoto = (index: number) => {
+        setPendingPhotos(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleDeletePhoto = async (id: string, fileUrl: string) => {
@@ -247,7 +272,9 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
     const isWorking = order.status === 'On Progress' || order.status === 'Done';
 
     // Derived state for display
-    const selectedHandymanObj = availableHandymen.find(h => h.id === selectedHandymanId);
+    const primaryHandymanId = selectedHandymanIds.length > 0 ? selectedHandymanIds[0] : undefined;
+    const selectedHandymanObj = availableHandymen.find(h => h.id === primaryHandymanId);
+    // Display logic: if updated name exists, use it, else generic
     const displayedHandymanName = order.handymanName || selectedHandymanObj?.name;
     const displayedHandymanRole = order.handymanRole || selectedHandymanObj?.role;
 
@@ -255,7 +282,7 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
     const HandymanIcon = roleStyle.icon;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fade-in font-sans">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fade-in font-sans">
             <div className="bg-white rounded-[2.5rem] w-full max-w-5xl max-h-[92vh] overflow-hidden shadow-2xl animate-scale-up flex flex-col relative ring-1 ring-gray-100">
 
                 {/* Navbar / Header - Clean style */}
@@ -318,14 +345,23 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
                                                     className={`w-full flex items-center justify-between bg-gray-50 hover:bg-white border text-left rounded-2xl p-4 transition-all
                                                         ${isDropdownOpen ? 'border-blue-500 ring-4 ring-blue-50 bg-white' : 'border-transparent hover:border-gray-200'}`}
                                                 >
-                                                    {selectedHandymanId ? (
+                                                    {selectedHandymanIds.length > 0 ? (
                                                         <div className="flex items-center gap-3">
-                                                            <div className={`p-2 rounded-xl ${roleStyle.bg} ${roleStyle.color}`}>
-                                                                <HandymanIcon className="w-5 h-5" />
-                                                            </div>
+                                                             <div className="flex -space-x-2">
+                                                                {availableHandymen.filter(h => selectedHandymanIds.includes(h.id)).slice(0, 3).map((h, i) => (
+                                                                     <div key={h.id} className={`w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs text-white ${getRoleStyle(h.role).bg.replace('bg-', 'bg-')}`}>
+                                                                         <User className="w-4 h-4 text-gray-500" />
+                                                                     </div>
+                                                                ))}
+                                                                {selectedHandymanIds.length > 3 && (
+                                                                    <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+                                                                        +{selectedHandymanIds.length - 3}
+                                                                    </div>
+                                                                )}
+                                                             </div>
                                                             <div>
-                                                                <p className="font-bold text-gray-900 text-sm leading-tight">{selectedHandymanObj?.name}</p>
-                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{selectedHandymanObj?.role}</p>
+                                                                <p className="font-bold text-gray-900 text-sm leading-tight">{selectedHandymanIds.length} Personel</p>
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tim Terpilih</p>
                                                             </div>
                                                         </div>
                                                     ) : (
@@ -341,14 +377,20 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
                                                             {availableHandymen.map((handyman) => {
                                                                 const hRoleStyle = getRoleStyle(handyman.role);
                                                                 const HIcon = hRoleStyle.icon;
-                                                                const isSelected = selectedHandymanId === handyman.id;
+                                                                const isSelected = selectedHandymanIds.includes(handyman.id);
 
                                                                 return (
                                                                     <button
                                                                         key={handyman.id}
                                                                         onClick={() => {
-                                                                            setSelectedHandymanId(handyman.id);
-                                                                            setIsDropdownOpen(false);
+                                                                            setSelectedHandymanIds(prev => {
+                                                                                if (prev.includes(handyman.id)) {
+                                                                                    return prev.filter(id => id !== handyman.id);
+                                                                                } else {
+                                                                                    return [...prev, handyman.id];
+                                                                                }
+                                                                            });
+                                                                            // Don't close dropdown on multi-select
                                                                         }}
                                                                         className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all
                                                                             ${isSelected ? 'bg-blue-50 border border-blue-100' : 'hover:bg-gray-50 border border-transparent'}`}
@@ -370,14 +412,30 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
                                             </>
                                         ) : (
                                             // Locked View
-                                            <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                                <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center ${roleStyle.bg} ${roleStyle.color}`}>
-                                                    <HandymanIcon className="w-6 h-6" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-gray-900">{displayedHandymanName || 'Belum Ditugaskan'}</p>
-                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{displayedHandymanRole || '-'}</p>
-                                                </div>
+                                            <div className="flex flex-col gap-2">
+                                                {(order.assignedHandymen && order.assignedHandymen.length > 0) ? (
+                                                     order.assignedHandymen.map(handyman => (
+                                                        <div key={handyman.id} className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                                            <div className={`w-12 h-12 rounded-xl shadow-sm flex items-center justify-center ${getRoleStyle(handyman.role).bg} ${getRoleStyle(handyman.role).color}`}>
+                                                                {React.createElement(getRoleStyle(handyman.role).icon, { className: "w-6 h-6" })}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-bold text-gray-900">{handyman.name}</p>
+                                                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{handyman.role || 'Tenaga Ahli'}</p>
+                                                            </div>
+                                                        </div>
+                                                     ))
+                                                ) : (
+                                                    <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                                        <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400">
+                                                            <User className="w-6 h-6" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-gray-900">Belum Ditugaskan</p>
+                                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">-</p>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -439,7 +497,17 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
                                         <span className="text-xs font-bold uppercase tracking-wider">Tanggal Mulai</span>
                                     </div>
                                     <p className="font-bold text-gray-900 leading-relaxed text-lg">
-                                        {new Date(order.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                        {(() => {
+                                            try {
+                                                const date = new Date(order.date);
+                                                if (isNaN(date.getTime())) {
+                                                    return 'Tanggal tidak valid';
+                                                }
+                                                return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                                            } catch (e) {
+                                                return 'Tanggal tidak valid';
+                                            }
+                                        })()}
                                     </p>
                                 </div>
                                 {order.userBudget && (
@@ -560,7 +628,12 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
                                     <h3 className="font-extrabold text-gray-900 text-lg flex items-center gap-2">
                                         <ImageIcon className="w-5 h-5 text-gray-400" /> Dokumentasi
                                     </h3>
-                                    <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold">{documentation.length} Foto</span>
+                                    <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold">
+                                        {documentation.length + pendingPhotos.length} Foto
+                                        {pendingPhotos.length > 0 && (
+                                            <span className="ml-1 text-yellow-600">({pendingPhotos.length} belum tersimpan)</span>
+                                        )}
+                                    </span>
                                 </div>
 
                                 {/* Custom Upload Area */}
@@ -585,13 +658,35 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
 
                                 {/* Gallery Grid */}
                                 <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-4">
-                                    {documentation.length === 0 ? (
+                                    {documentation.length === 0 && pendingPhotos.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center h-32 text-gray-300 border border-gray-100 rounded-3xl border-dashed">
                                             <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
                                             <span className="text-xs font-bold">Belum ada dokumentasi</span>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-2 gap-3">
+                                            {/* Pending Photos (not yet saved) */}
+                                            {pendingPhotos.map((file, index) => (
+                                                <div key={`pending-${index}`} className="aspect-square rounded-2xl relative overflow-hidden group shadow-sm bg-gray-100 border-2 border-yellow-300">
+                                                    <img
+                                                        src={URL.createObjectURL(file)}
+                                                        alt="Pending upload"
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                    />
+                                                    <div className="absolute top-2 left-2 px-2 py-1 bg-yellow-500 text-white text-xs font-bold rounded-lg">
+                                                        Belum Tersimpan
+                                                    </div>
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                        <button
+                                                            onClick={() => handleRemovePendingPhoto(index)}
+                                                            className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-colors shadow-lg backdrop-blur-sm"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {/* Uploaded Documentation */}
                                             {documentation.map((doc) => (
                                                 <div key={doc.id} className="aspect-square rounded-2xl relative overflow-hidden group shadow-sm bg-gray-100">
                                                     <img
@@ -637,9 +732,9 @@ export const MandorOrderDetailModal: React.FC<MandorOrderDetailModalProps> = ({ 
                     ) : isPending ? (
                         <button
                             onClick={handleSave}
-                            disabled={!selectedHandymanId || !estValue}
+                            disabled={selectedHandymanIds.length === 0 || !estValue}
                             className={`px-8 py-4 font-bold rounded-2xl flex items-center gap-2 transition-all shadow-lg
-                                ${(!selectedHandymanId || !estValue)
+                                ${(selectedHandymanIds.length === 0 || !estValue)
                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
                                     : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200 hover:shadow-blue-300 hover:-translate-y-1'}`}
                         >

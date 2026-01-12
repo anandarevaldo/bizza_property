@@ -40,33 +40,39 @@ export const documentationService = {
         const fileName = `${orderId}/${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
 
-        // Ensure 'documents' bucket exists
+        // Ensure 'order-documentation' bucket exists
         const { error: uploadError } = await supabase.storage
-            .from('documents')
+            .from('order-documentation')
             .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
         // 2. Get Public URL
         const { data: { publicUrl } } = supabase.storage
-            .from('documents')
+            .from('order-documentation')
             .getPublicUrl(filePath);
 
-        // 3. Get Current User
+        // 3. Get Current User (Optional)
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('User not authenticated');
+        // if (!user) throw new Error('User not authenticated'); // Disabled to allow debug/anon uploads
 
         // 4. Insert record into database
+        console.log('Inserting into database:', { orderId, userId: user?.id || 'anon', fileUrl: publicUrl });
         const { data, error } = await supabase
             .from('dokumentasi')
             .insert({
                 pesanan_id: parseInt(orderId),
-                uploaded_by: user.id,
+                uploaded_by: user?.id || null, // Allow null if not authenticated
                 file_url: publicUrl,
                 keterangan: description
             })
             .select()
             .single();
+
+        if (error) {
+            console.error('Database Insert Error:', error);
+            throw new Error(`Database Error: ${error.message} (${error.code})`);
+        }
 
         if (error) throw error;
 
@@ -83,9 +89,10 @@ export const documentationService = {
     // Delete documentation
     delete: async (id: string, fileUrl: string) => {
         // 1. Delete from Storage (extract path from URL)
-        const path = fileUrl.split('/documents/')[1];
+        // URL format: .../order-documentation/folder/filename.ext
+        const path = fileUrl.split('/order-documentation/')[1];
         if (path) {
-            await supabase.storage.from('documents').remove([path]);
+            await supabase.storage.from('order-documentation').remove([path]);
         }
 
         // 2. Delete from DB

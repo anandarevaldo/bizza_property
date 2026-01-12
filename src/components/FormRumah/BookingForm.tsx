@@ -120,7 +120,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ switchView }) => {
             // 5. Upload Payment Proof
             if (paymentProof) {
                 const proofUrl = await orderService.uploadOrderImage(paymentProof, order.pesanan_id.toString(), user.id);
+                // Save to Documentation (Legacy/Backup)
                 await orderService.createDocumentation(order.pesanan_id, user.id, proofUrl, 'Bukti Pembayaran QRIS');
+                // Save to Orders Table (Main)
+                await orderService.updateOrder(order.pesanan_id, { payment_proof: proofUrl });
             }
 
             alert('Pesanan berhasil dibuat! Kami akan segera memverifikasi pembayaran Anda.');

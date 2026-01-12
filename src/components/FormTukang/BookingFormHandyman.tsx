@@ -126,7 +126,11 @@ const BookingFormHandyman: React.FC<BookingFormHandymanProps> = ({ switchView, s
             if (order) {
                 // Upload Proof
                 const proofUrl = await orderService.uploadOrderImage(paymentProof, order.pesanan_id.toString(), user.id);
+                // Save to Documentation (Legacy/Backup)
                 await orderService.createDocumentation(order.pesanan_id, user.id, proofUrl, 'Bukti Pembayaran QRIS');
+                
+                // Save to Orders Table (Main)
+                await orderService.updateOrder(order.pesanan_id, { payment_proof: proofUrl });
 
                 alert("Pesanan Tukang Berhasil! Kami akan segera memverifikasi pembayaran Anda.");
                 switchView('home');

@@ -15,13 +15,15 @@ export interface Schedule {
     mandor: string;
     mandorId?: number;
     status: 'Need Validation' | 'On Progress' | 'Cancel' | 'Done';
-    assignedHandymanId?: number;
+    assignedHandymanId?: number; // Kept for backward compat
+    assignedHandymen?: { id: number; name: string; knownSkill?: string }[]; // New field
     handymanName?: string;
     orderId?: number;
     handymanId?: string;
 }
 
 import { scheduleService } from '../../lib/services/scheduleService';
+import { orderService } from '@/lib/services/orderService';
 
 
 // export const initialSchedules: Schedule[] = [
@@ -43,15 +45,56 @@ export const MandorScheduleList: React.FC = () => {
 
     const [currentSchedule, setCurrentSchedule] = useState<Schedule | null>(null);
 
-    // Fetch schedules for Mandor (ID 1 for demo)
+    // Fetch schedules for Mandor
     React.useEffect(() => {
         const fetchSchedules = async () => {
             setIsLoading(true);
             try {
-                // Simulate Mandor ID 1 (Pak Mandor Budi)
-                const data = await scheduleService.getByMandor(1);
-                // Cast to local Schedule type if needed, or ensure compatibility
-                setSchedules(data as any);
+                // Use the new OrderService method that handles Auth/Fallback
+                const data = await orderService.getMyMandorOrders();
+                
+                const mappedSchedules: Schedule[] = (data || []).map((o: any) => {
+                    // Map Status
+                    let status: Schedule['status'] = 'Need Validation';
+                    if (o.status_pesanan === 'ON_PROGRESS') status = 'On Progress';
+                    else if (o.status_pesanan === 'DONE') status = 'Done';
+                    else if (o.status_pesanan === 'CANCEL') status = 'Cancel';
+                    
+                    // Format Date (Use jadwal_survey if exists, else tanggal_pesan)
+                    const dateObj = o.jadwal_survey ? new Date(o.jadwal_survey) : new Date(o.tanggal_pesan);
+                    const dateStr = dateObj.toISOString().split('T')[0];
+
+                    // Map Assignments
+                    const assignedHandymen = o.assignments?.map((a: any) => ({
+                        id: a.anggota?.anggota_id,
+                        name: a.anggota?.nama,
+                        knownSkill: a.anggota?.keahlian
+                    })) || [];
+
+                    // Fallback for single assignment (legacy/admin view compatibility)
+                    // If assignedHandymen is empty but o.handyman (joined via tukang_id) exists, use it?
+                    // But orderService fetch was updated to return assignments. 
+                    // Let's rely on assignments mostly, but if empty, check legacy ID for robustness.
+                    
+                    return {
+                        id: o.pesanan_id?.toString(),
+                        customerName: o.customer_name || 'Anonymous',
+                        service: o.layanan?.nama_layanan || o.tipe_pesanan,
+                        date: dateStr,
+                        time: o.jam_survey || '09:00', // Default time if missing
+                        address: o.alamat_proyek || 'Lokasi tidak tersedia',
+                        mandor: o.mandor?.nama || 'Saya',
+                        mandorId: o.mandor_id,
+                        status: status,
+                        orderId: o.pesanan_id,
+                        assignedHandymanId: o.tukang_id, // Map DB column to UI model
+                        assignedHandymen: assignedHandymen,
+                        handymanName: assignedHandymen.map((h: any) => h.name).join(', '), // Display comma separated names
+                        handymanSkill: assignedHandymen.length > 0 ? assignedHandymen[0].knownSkill : '' // Just show first skill or mix
+                    };
+                });
+
+                setSchedules(mappedSchedules);
             } catch (error) {
                 console.error('Error fetching schedules:', error);
             } finally {
@@ -125,18 +168,40 @@ export const MandorScheduleList: React.FC = () => {
         setIsDetailModalOpen(true);
     };
 
-    const handleSaveSchedule = async (scheduleData: Partial<Schedule>, isNew: boolean) => {
+    const handleSaveSchedule = async (scheduleData: Partial<Schedule> & { assignedHandymenIds?: number[] }, isNew: boolean) => {
         try {
             if (isNew) {
                 // Should not happen in Mandor view usually, but if enabled
-                await scheduleService.create(scheduleData as any);
+                // await scheduleService.create(scheduleData as any);
+                console.warn('Creating new schedules not implemented for Mandor view yet');
             } else {
-                await scheduleService.update((scheduleData as Schedule).id, scheduleData);
+                // Use orderService to update the real database
+                const orderId = (scheduleData as Schedule).id;
+                
+                // 1. Update basic info
+                await orderService.updateOrder(orderId, {
+                    // Update allowed fields
+                    status_pesanan: scheduleData.status === 'On Progress' ? 'ON_PROGRESS' : 
+                                  scheduleData.status === 'Done' ? 'DONE' : 
+                                  scheduleData.status === 'Cancel' ? 'CANCEL' : 'NEED_VALIDATION',
+                    jam_survey: scheduleData.time,
+                    jadwal_survey: scheduleData.date ? new Date(scheduleData.date).toISOString() : undefined,
+                    customer_name: scheduleData.customerName,
+                    alamat_proyek: scheduleData.address,
+                    // tukang_id: scheduleData.assignedHandymanId // REMOVED: Now handled by updateOrderAssignments
+                });
+
+                // 2. Update Assignments if provided
+                if (scheduleData.assignedHandymenIds) {
+                    await orderService.updateOrderAssignments(parseInt(orderId), scheduleData.assignedHandymenIds);
+                }
             }
             // Refresh logic handles the update via useEffect dependency or manual refresh
             setIsEditModalOpen(false);
+            // Trigger refresh manually or rely on useEffect depend on isEditModalOpen toggle
         } catch (error) {
             console.error('Error saving:', error);
+            alert('Gagal menyimpan perubahan. Silakan coba lagi.');
         }
     };
 
@@ -190,7 +255,7 @@ export const MandorScheduleList: React.FC = () => {
                             </div>
                         </div>
                         <div className="grid grid-cols-7 gap-2 text-center mb-4">
-                            {weekHeaders.map(d => <div key={d} className="text-gray-400 font-extrabold text-xs py-2">{d}</div>)}
+                            {weekHeaders.map((d, i) => <div key={`${d}-${i}`} className="text-gray-400 font-extrabold text-xs py-2">{d}</div>)}
 
                             {/* Empty slots for previous month */}
                             {[...Array(firstDay)].map((_, i) => (

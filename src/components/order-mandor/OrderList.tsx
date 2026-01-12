@@ -1,255 +1,259 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Search, FileText, Briefcase, Users } from 'lucide-react';
-import { MandorOrderDetailModal } from './OrderDetailModal';
-
-import { scheduleService, Schedule } from '../../lib/services/scheduleService';
-
-// Mock Team Data (Synced with TeamManagement)
-const internalTeam = [
-    { id: 1, name: 'Budi Santoso', role: 'Tukang Cat' },
-    { id: 2, name: 'Asep Supriyadi', role: 'Tukang Kayu' },
-    { id: 3, name: 'Joko Widodo', role: 'Tukang Listrik' },
-];
-
-export interface Order {
-    id: string;
-    orderNumber: string;
-    customer: string;
-    type: 'Jasa Tukang' | 'Borongan' | 'Material';
-    total: string;
-    date: string;
-    status: 'Need Validation' | 'On Progress' | 'Done' | 'Cancel';
-    userBudget?: string;
-    rabProposed?: number;
-    rabStatus?: 'Pending' | 'Approved' | 'Rejected';
-    assignedHandymanId?: number; // Optional, for Jasa Tukang
-    // New fields for dashboard-like view
-    project?: string;
-    progress?: number;
-    pesananId?: number; // Real Order ID for foreign keys
-}
-
-// Filtered to only show Projects, removing RABs
-export const initialOrders: Order[] = [
-    { id: 'PRJ-001', orderNumber: 'PRJ-001', customer: 'Bapak Ahmad Saifuddin', project: 'Renovasi Rumah Cluster A', type: 'Borongan', total: 'Rp 15.000.000', date: '2023-10-12', status: 'On Progress', progress: 75 },
-    { id: 'PRJ-002', orderNumber: 'PRJ-002', customer: 'Ibu Siti Aminah', project: 'Pembuatan Kolam Ikan', type: 'Borongan', total: 'Rp 8.500.000', date: '2023-10-15', status: 'Done', progress: 100 },
-    { id: 'TKG-001', orderNumber: 'TKG-001', customer: 'Pak Budi Santoso', project: 'Perbaikan Atap Bocor', type: 'Jasa Tukang', total: 'Rp 2.500.000', date: '2023-10-18', status: 'Need Validation', progress: 0, assignedHandymanId: 1 },
-    { id: 'SRV-001', orderNumber: 'SRV-001', customer: 'Ibu Ratna', project: 'Survey Lokasi Renovasi', type: 'Borongan', total: 'Rp 0', date: '2023-10-20', status: 'Need Validation', progress: 0, userBudget: '5jt-10jt', rabStatus: 'Pending' },
-];
+import React, { useState, useEffect } from 'react';
+import { Search, FileText, CheckCircle, Clock, XCircle, RefreshCcw, Briefcase, Wrench, Package } from 'lucide-react';
+import { MandorOrderDetailModal, Order } from './OrderDetailModal';
+import { orderService } from '@/lib/services/orderService';
 
 export const MandorOrderList: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [filterType, setFilterType] = useState<string>('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-    // Fetch orders for Mandor (ID 1 for demo)
-    React.useEffect(() => {
-        const fetchOrders = async () => {
+    const fetchOrders = async () => {
+        try {
             setIsLoading(true);
-            try {
-                // Simulate Mandor ID 1 (Pak Mandor Budi)
-                const data = await scheduleService.getByMandor(1);
+            const data = await orderService.getMyMandorOrders(); 
 
-                const mappedOrders: Order[] = data.map((schedule: Schedule) => ({
-                    id: schedule.id,
-                    orderNumber: `ORD-${schedule.id}`,
-                    customer: schedule.customerName,
-                    type: (schedule.kategoriLayanan as any) || 'Borongan',
-                    total: schedule.budget || 'Rp 0',
-                    date: schedule.date,
-                    status: schedule.status as any,
-                    project: schedule.service,
-                    progress: schedule.status === 'Done' ? 100 : schedule.status === 'On Progress' ? 50 : 0,
-                    userBudget: schedule.budget,
-                    pesananId: schedule.orderId
-                }));
+            const formattedOrders: Order[] = (data || []).map((o: any) => {
+                // Map DB Type to UI Type
+                let uiType: Order['type'] = 'Jasa Tukang';
+                if (o.tipe_pesanan === 'Material') uiType = 'Material';
+                else if (o.tipe_pesanan === 'Rumah' || o.tipe_pesanan === 'Bisnis') uiType = 'Borongan';
+                else uiType = 'Jasa Tukang'; // Layanan & Tukang
 
-                setOrders(mappedOrders);
-            } catch (error) {
-                console.error('Error fetching details:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+                // Map DB Status to UI Status
+                let uiStatus: Order['status'] = 'Need Validation';
+                if (o.status_pesanan === 'ON_PROGRESS') uiStatus = 'On Progress';
+                else if (o.status_pesanan === 'DONE') uiStatus = 'Done';
+                else if (o.status_pesanan === 'CANCEL') uiStatus = 'Cancel';
+                else if (o.status_pesanan === 'NEED_VALIDATION') uiStatus = 'Need Validation';
 
+                // Map Assignments
+                const assignedHandymen = o.assignments?.map((a: any) => ({
+                    id: a.anggota?.anggota_id,
+                    name: a.anggota?.nama,
+                    role: a.anggota?.keahlian // Assuming keahlian is role, or map it if needed
+                })) || [];
+
+                return {
+                    id: o.pesanan_id?.toString(),
+                    orderNumber: `ORD-${new Date(o.tanggal_pesan).getFullYear()}-${(o.pesanan_id || 0).toString().padStart(3, '0')}`,
+                    customer: o.customer_name || 'Anonymous',
+                    type: uiType,
+                    total: o.budget || 'Rp 0',
+                    date: o.jadwal_survey 
+                        ? new Date(o.jadwal_survey).toLocaleDateString('id-ID')
+                        : new Date(o.tanggal_pesan).toLocaleDateString('id-ID'),
+                    status: uiStatus,
+                    pesananId: o.pesanan_id,
+                    project: o.tipe_properti || o.tipe_pesanan,
+                    location: o.alamat_proyek || 'Lokasi tidak tersedia',
+                    description: o.deskripsi,
+                    userBudget: o.budget, // Pass original budget string
+                    progress: 0, // Default, ideally fetch from DB if column exists or separate table
+                    assignedHandymen: assignedHandymen,
+                    assignedHandymanId: o.tukang_id // Legacy
+                };
+            });
+            setOrders(formattedOrders);
+        } catch (error: any) {
+            console.error('Error fetching orders:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchOrders();
-    }, [isDetailModalOpen]);
+    }, []);
+
+    const filteredOrders = orders.filter(order =>
+        (filterType === 'All' || order.type === filterType) &&
+        (order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.customer.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
     const handleViewDetail = (order: Order) => {
         setSelectedOrder(order);
         setIsDetailModalOpen(true);
     };
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'On Progress': return { label: 'ON PROGRESS', bg: 'bg-blue-600', text: 'text-blue-600', pillBg: 'bg-blue-100' };
-            case 'Done': return { label: 'DONE', bg: 'bg-green-500', text: 'text-green-600', pillBg: 'bg-green-100' };
-            case 'Need Validation': return { label: 'NEED VALIDATION', bg: 'bg-yellow-400', text: 'text-yellow-600', pillBg: 'bg-yellow-100' };
-            case 'Cancel': return { label: 'CANCELLED', bg: 'bg-red-500', text: 'text-red-600', pillBg: 'bg-red-100' };
-            default: return { label: status, bg: 'bg-gray-400', text: 'text-gray-600', pillBg: 'bg-gray-100' };
+    const handleSaveOrder = async (updatedOrder: Order) => {
+        try {
+            // 1. Update basic order info (status, progress, etc)
+            // Note: DB Status mapping needed if we change status back
+            let dbStatus = updatedOrder.status === 'On Progress' ? 'ON_PROGRESS' :
+                           updatedOrder.status === 'Done' ? 'DONE' :
+                           updatedOrder.status === 'Need Validation' ? 'NEED_VALIDATION' : 'CANCEL';
+
+            await orderService.updateOrder(updatedOrder.pesananId!, {
+                status_pesanan: dbStatus,
+                progress: updatedOrder.progress,
+                // Add other fields if editable like estimation
+            });
+            
+            // 2. Update Assignments
+            if (updatedOrder.assignedHandymen) {
+                const handymanIds = updatedOrder.assignedHandymen.map(h => h.id);
+                await orderService.updateOrderAssignments(updatedOrder.pesananId!, handymanIds);
+            }
+
+            // 3. Update local state
+            setOrders(prev => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
+            console.log("Order Updated Successfully:", updatedOrder);
+            alert("Perubahan berhasil disimpan!");
+        } catch (error) {
+            console.error("Failed to save order:", error);
+            alert("Gagal menyimpan perubahan.");
         }
     };
 
-    // Card Renderer Component
-    const OrderCard = ({ order }: { order: Order }) => {
-        const statusMeta = getStatusBadge(order.status);
-
-        return (
-            <div
-                onClick={() => handleViewDetail(order)}
-                className="group flex flex-col md:flex-row md:items-center justify-between p-6 bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-blue-50 hover:border-blue-100 transition-all duration-300 cursor-pointer mb-4"
-            >
-                <div className="flex items-center gap-5 mb-4 md:mb-0">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl border shadow-sm
-                        ${order.status === 'On Progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                            order.status === 'Done' ? 'bg-green-50 text-green-600 border-green-100' :
-                                order.status === 'Need Validation' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
-                                    'bg-red-50 text-red-600 border-red-100'
-                        }
-`}>
-                        {order.project ? order.project.charAt(0) : 'P'}
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-blue-600 transition-colors">
-                            {order.project || order.customer}
-                        </h4>
-                        <div className="flex items-center gap-3 text-xs font-bold text-gray-400">
-                            <span className="bg-gray-50 px-2 py-1 rounded-md border border-gray-100 text-gray-500">{order.orderNumber}</span>
-                            <span>•</span>
-                            <span>{order.total}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
-                    {order.status !== 'Need Validation' && ( // Only show progress bar if not pending/0
-                        <div className="w-32 hidden sm:block">
-                            <div className="flex justify-between text-[10px] font-bold text-gray-400 mb-1">
-                                <span>Progress</span>
-                                <span>{order.progress || 0}%</span>
-                            </div>
-                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div className={`h-full rounded-full transition-all duration-500 ${statusMeta.bg}`} style={{ width: `${order.progress || 0}%` }}></div>
-                            </div>
-                        </div>
-                    )}
-                    <div className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider ${statusMeta.pillBg} ${statusMeta.text}`}>
-                        {statusMeta.label}
-                    </div>
-                </div>
-            </div>
-        );
+    const getStatusStyle = (status: string) => {
+        switch (status) {
+            case 'Done': return { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', icon: CheckCircle };
+            case 'On Progress': return { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100', icon: Clock };
+            case 'Need Validation': return { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', icon: Clock };
+            case 'Cancel': return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100', icon: XCircle };
+            default: return { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-100', icon: Clock };
+        }
     };
 
+    const getTypeIcon = (type: string) => {
+        switch (type) {
+             case 'Jasa Tukang': return { icon: Wrench, color: 'text-blue-500', bg: 'bg-blue-50' };
+             case 'Borongan': return { icon: Briefcase, color: 'text-purple-500', bg: 'bg-purple-50' };
+             case 'Material': return { icon: Package, color: 'text-orange-500', bg: 'bg-orange-50' };
+             default: return { icon: FileText, color: 'text-gray-500', bg: 'bg-gray-50' };
+        }
+    }
+
     return (
-        <div className="space-y-12 animate-fade-in">
-            {/* Header */}
-            <div className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-gray-100 border border-gray-100 relative overflow-hidden">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <>
+            <div className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-gray-100 border border-gray-100 animate-fade-in relative z-10">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="p-3 bg-teal-50 rounded-2xl text-teal-600">
+                            <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
                                 <Briefcase className="w-6 h-6" />
                             </div>
-                            <h2 className="text-3xl font-extrabold text-gray-900">Daftar Proyek & Pesanan</h2>
+                            <h2 className="text-3xl font-extrabold text-gray-900">Tugas Saya</h2>
                         </div>
-                        <p className="text-gray-500 font-medium ml-1">Kelola status proyek berjalan dan pesanan jasa tukang.</p>
+                        <p className="text-gray-500 font-medium ml-1">Kelola daftar pekerjaan dan update progress.</p>
+                    </div>
+
+                    {/* Stats Mini Cards */}
+                    <div className="flex gap-4 items-center">
+                        <button
+                            onClick={fetchOrders}
+                            className="p-3 bg-gray-50 hover:bg-gray-100 rounded-2xl text-gray-400 transition-colors"
+                            title="Refresh Data"
+                        >
+                            <RefreshCcw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+                        </button>
+                        <div className="px-5 py-3 bg-blue-50 rounded-2xl border border-blue-100">
+                            <p className="text-xs font-bold text-blue-600 uppercase mb-1">Active</p>
+                            <p className="text-2xl font-black text-blue-700">{orders.filter(o => o.status === 'On Progress' || o.status === 'Need Validation').length}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Search Bar */}
-            <div className="relative w-full px-4">
-                <Search className="absolute left-9 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                    type="text"
-                    placeholder="Cari No. Order atau Customer..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-gray-50 font-medium text-gray-700"
-                />
-            </div>
-
-            {/* Section 1: Jasa Tukang */}
-            <div>
-                <div className="flex items-center gap-3 mb-6 px-4">
-                    <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
-                        <Users className="w-5 h-5" />
+                {/* Filter & Search Toolbar */}
+                <div className="flex flex-col md:flex-row gap-4 mb-8">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <input
+                            type="text"
+                            placeholder="Cari No. Order atau Nama Customer..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-gray-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-gray-50 font-medium text-gray-700"
+                        />
                     </div>
-                    <h3 className="text-2xl font-black text-gray-900">Pekerjaan Jasa Tukang</h3>
+                    <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                        {['All', 'Jasa Tukang', 'Borongan', 'Material'].map(type => (
+                            <button
+                                key={type}
+                                onClick={() => setFilterType(type)}
+                                className={`px-6 py-4 rounded-2xl font-bold transition-all whitespace-nowrap ${filterType === type
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105'
+                                    : 'bg-white border-2 border-gray-100 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                                    }`}
+                            >
+                                {type}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="space-y-4 px-4">
-                    {isLoading ? (
-                        <div className="text-center py-8 text-gray-500">Memuat data...</div>
-                    ) : (
-                        <>
-                            {orders.filter(o => o.type === 'Jasa Tukang' && (
-                                o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
-                            )).map(order => (
-                                <OrderCard key={order.id} order={order} />
-                            ))}
-                            {orders.filter(o => o.type === 'Jasa Tukang' && (
-                                o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
-                            )).length === 0 && (
-                                    <div className="p-8 text-center text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                                        Tidak ada pekerjaan jasa tukang.
-                                    </div>
-                                )}
-                        </>
+                {/* Table */}
+                <div className="overflow-visible rounded-3xl border border-gray-100 shadow-sm bg-white">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-white border-b border-gray-100">
+                                <th className="p-6 font-extrabold text-gray-400 text-xs uppercase tracking-wider">No. Order</th>
+                                <th className="p-6 font-extrabold text-gray-400 text-xs uppercase tracking-wider">Customer</th>
+                                <th className="p-6 font-extrabold text-gray-400 text-xs uppercase tracking-wider">Tipe</th>
+                                <th className="p-6 font-extrabold text-gray-400 text-xs uppercase tracking-wider hidden md:table-cell">Tanggal</th>
+                                <th className="p-6 font-extrabold text-gray-400 text-xs uppercase tracking-wider">Status</th>
+                                <th className="p-6 font-extrabold text-gray-400 text-xs uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {filteredOrders.map((order) => {
+                                const statusStyle = getStatusStyle(order.status);
+                                const typeStyle = getTypeIcon(order.type);
+                                const StatusIcon = statusStyle.icon;
+                                
+                                return (
+                                    <tr key={order.id} className="hover:bg-gray-50/80 transition-colors group">
+                                        <td className="p-6 font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{order.orderNumber}</td>
+                                        <td className="p-6 font-bold text-gray-900">{order.customer}</td>
+                                        <td className="p-6">
+                                            <div className={`px-4 py-2 rounded-xl text-xs font-bold border inline-flex items-center gap-2 ${typeStyle.bg} ${typeStyle.color} border-transparent`}>
+                                                <span className="truncate">{order.type}</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-6 text-gray-400 font-bold text-sm hidden md:table-cell">{order.date}</td>
+                                        <td className="p-6">
+                                            <div className={`inline-flex items-center gap-2 pl-3 pr-4 py-2 rounded-full text-[10px] font-extrabold border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
+                                                <StatusIcon className="w-3.5 h-3.5" />
+                                                <span>{order.status}</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-6">
+                                            <button
+                                                onClick={() => handleViewDetail(order)}
+                                                className="text-indigo-600 font-bold hover:text-indigo-800 hover:underline transition-all text-sm"
+                                            >
+                                                Update
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                    {filteredOrders.length === 0 && (
+                        <div className="p-10 text-center text-gray-400">
+                            <p className="font-bold">Tidak ada tugas saat ini.</p>
+                        </div>
                     )}
                 </div>
+
             </div>
-
-            {/* Section 2: Borongan */}
-            <div>
-                <div className="flex items-center gap-3 mb-6 px-4">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
-                        <FileText className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-2xl font-black text-gray-900">Pekerjaan Borongan</h3>
-                </div>
-
-                <div className="space-y-4 px-4">
-                    {isLoading ? (
-                        <div className="text-center py-8 text-gray-500">Memuat data...</div>
-                    ) : (
-                        <>
-                            {orders.filter(o => o.type !== 'Jasa Tukang' && (
-                                o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
-                            )).map(order => (
-                                <OrderCard key={order.id} order={order} />
-                            ))}
-                            {orders.filter(o => o.type !== 'Jasa Tukang' && (
-                                o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                o.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (o.project && o.project.toLowerCase().includes(searchTerm.toLowerCase()))
-                            )).length === 0 && (
-                                    <div className="p-8 text-center text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                                        Tidak ada pekerjaan borongan/lainnya.
-                                    </div>
-                                )}
-                        </>
-                    )}
-                </div>
-            </div>
-
-            {/* Mandor Order Detail Modal */}
+            
+            {/* Order Detail Modal */}
             <MandorOrderDetailModal
                 isOpen={isDetailModalOpen}
                 onClose={() => setIsDetailModalOpen(false)}
                 order={selectedOrder}
+                onSave={handleSaveOrder}
             />
-        </div>
+        </>
     );
 };
